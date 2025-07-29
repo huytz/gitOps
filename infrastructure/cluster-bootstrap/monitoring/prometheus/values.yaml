@@ -1,0 +1,25 @@
+# Prometheus Stack configuration for cluster monitoring
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    # storageSpec:
+    #   volumeClaimTemplate:
+    #     spec:
+    #       accessModes: ["ReadWriteOnce"]
+    #       resources:
+    #         requests:
+    #           storage: 10Gi
+
+grafana:
+  enabled: false
+
+alertmanager:
+  enabled: false
+
+# Enable kube-state-metrics
+kubeStateMetrics:
+  enabled: true
+
+# Enable node-exporter
+nodeExporter:
+  enabled: true

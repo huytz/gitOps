@@ -1,0 +1,23 @@
+image:
+  registry: docker.io
+  repository: bitnami/redis
+  tag: 8.0.3-debian-12-r1
+  digest: ""
+
+architecture: standalone
+
+auth:
+  enabled: false
+  sentinel: false
+
+commonConfiguration: |-
+  appendonly no
+  save ""
+
+master:
+  count: 1
+  persistence:
+    enabled: false
+
+replica:
+  replicaCount: 0

@@ -18,6 +18,7 @@ controller:
 
   ingressController:
     enabled: true
+    ingressClass: gateway-public
 
     gatewayDiscovery:
       enabled: true
@@ -32,4 +33,4 @@ controller:
     traffic.sidecar.istio.io/excludeOutboundPorts: "8444"
 
 gateway:
-  enabled: false
+  enabled: true
