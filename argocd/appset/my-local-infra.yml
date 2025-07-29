@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: my-local-appset
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - git:
+      repoURL: https://github.com/huytz/gitops.git
+      revision: HEAD
+      directories:
+      - path: apps/docker-desktop/*
+  template:
+    metadata:
+      name: '{{.path.basename}}'
+    spec:
+      project: my-local-project      
+      sources:
+      - repoURL: https://helmcharts.gruntwork.io
+        chart: 'k8s-service'
+        targetRevision: "0.2.29"
+        helm:
+          valueFiles:
+          - $values/{{.path.path}}/values.yaml 
+      - repoURL: https://github.com/huytz/gitops.git
+        targetRevision: HEAD
+        ref: values
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{index .path.segments 2}}'
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+        automated:
+          prune: true
+          selfHeal: true
