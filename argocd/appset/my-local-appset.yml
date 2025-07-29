@@ -15,14 +15,22 @@ spec:
     metadata:
       name: '{{.path.basename}}'
     spec:
-      project: my-local-project
-      source:
-        repoURL: https://github.com/huytz/gitops.git
+      project: my-local-project      
+      sources:
+      - repoURL: https://helmcharts.gruntwork.io
+        chart: 'k8s-service'
+        targetRevision: "0.2.29"
+        helm:
+          valueFiles:
+          - $values/{{.path.path}}/values.yaml 
+      - repoURL: https://github.com/huytz/gitops.git
         targetRevision: HEAD
-        path: '{{.path.path}}'
+        ref: values/
+
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{.path.basename}}'
+        namespace: '{{index .path.segments 2}}'
+
       syncPolicy:
         syncOptions:
         - CreateNamespace=true
