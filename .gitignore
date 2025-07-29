@@ -1,0 +1,46 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Secrets (should be managed externally)
+*-secret.yaml
+*-secrets.yaml
+secrets/
+.env
+
+# Local development files
+.env.local
+.env.*.local
+
+# Helm chart packages
+*.tgz
+charts/*/charts/
+
+# Kustomize build outputs
+kustomization-build.yaml
+
+# ArgoCD generated files
+argocd-generated/
+
+# Test files
+test-results/
+coverage/ 

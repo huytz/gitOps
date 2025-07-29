@@ -1,0 +1,9 @@
+apiVersion: v2
+name: guestbook-ui
+type: application
+version: 0.1.0
+appVersion: "1.0"
+dependencies:
+- name: k8s-service
+  version: 0.2.29
+  repository: https://helmcharts.gruntwork.io

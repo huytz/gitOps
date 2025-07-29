@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: my-local-appset
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - git:
+      repoURL: https://github.com/huytz/gitops.git
+      revision: HEAD
+      directories:
+      - path: apps/docker-desktop/default/*
+  template:
+    metadata:
+      name: '{{.path.basename}}'
+    spec:
+      project: my-local-project
+      source:
+        repoURL: https://github.com/huytz/gitops.git
+        targetRevision: HEAD
+        path: '{{.path.path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.path.basename}}'
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
