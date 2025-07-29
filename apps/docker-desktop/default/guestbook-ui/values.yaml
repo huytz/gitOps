@@ -1,3 +1,4 @@
+applicationName: guestbook-ui
 replicaCount: 1
 image:
   repository: gcr.io/google-samples/gb-frontend:v5
