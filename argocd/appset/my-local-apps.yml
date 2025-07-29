@@ -18,7 +18,7 @@ spec:
       labels:
         appset: my-local-apps
         environment: '{{index .path.segments 2}}'
-        cluster: '{{index .path.segments 3}}'
+        cluster: '{{index .path.segments 1}}'
     spec:
       project: my-local-project      
       sources:
