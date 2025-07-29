@@ -10,7 +10,8 @@ spec:
       repoURL: https://github.com/huytz/gitops.git
       revision: HEAD
       directories:
-      - path: apps/docker-desktop/*
+      - path: apps/docker-desktop/*/*
+  
   template:
     metadata:
       name: '{{.path.basename}}'
