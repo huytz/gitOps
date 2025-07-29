@@ -1,11 +1,14 @@
 applicationName: guestbook-ui
 replicaCount: 1
-image:
-  repository: gcr.io/google-samples/gb-frontend:v5
+containerImage:
+  repository: gcr.io/google-samples/gb-frontend
+  tag: v5
   pullPolicy: IfNotPresent
+
 containerPort: 80
 service:
   type: ClusterIP
   port: 80
+
 ingress:
   enabled: false
