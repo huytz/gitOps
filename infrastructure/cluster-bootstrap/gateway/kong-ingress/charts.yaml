@@ -1,0 +1,3 @@
+repoURL: https://charts.konghq.com
+chart: kong
+targetRevision: 2.33.0

@@ -43,7 +43,7 @@ spec:
           ref: values
       destination:
         server: "{{.server}}"
-        namespace: "{{index .path.segments 2}}"
+        namespace: "{{index .path.segments 3}}"
       syncPolicy:
         syncOptions:
           - CreateNamespace=true

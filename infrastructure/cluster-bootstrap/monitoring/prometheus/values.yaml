@@ -1,25 +1,104 @@
-# Prometheus Stack configuration for cluster monitoring
-prometheus:
-  prometheusSpec:
-    retention: 7d
-    # storageSpec:
-    #   volumeClaimTemplate:
-    #     spec:
-    #       accessModes: ["ReadWriteOnce"]
-    #       resources:
-    #         requests:
-    #           storage: 10Gi
+## Install Prometheus Operator CRDs
+##
+crds:
+  enabled: true
+  ## The CRD upgrade job mitigates the limitation of helm not being able to upgrade CRDs.
+  ## The job will apply the CRDs to the cluster before the operator is deployed, using helm hooks.
+  ## It deploy a corresponding clusterrole, clusterrolebinding and serviceaccount to apply the CRDs.
+  ## This feature is in preview, off by default and may change in the future.
+  ## Enable CRD upgrade job to ensure CRDs are installed first
+  upgradeJob:
+    enabled: true
 
+## Create default rules for monitoring the cluster
+##
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: true
+    configReloaders: true
+    general: true
+    k8sContainerCpuUsageSecondsTotal: true
+    k8sContainerMemoryCache: true
+    k8sContainerMemoryRss: true
+    k8sContainerMemorySwap: true
+    k8sContainerResource: true
+    k8sContainerMemoryWorkingSetBytes: true
+    k8sPodOwner: true
+    kubeApiserverAvailability: true
+    kubeApiserverBurnrate: true
+    kubeApiserverHistogram: true
+    kubeApiserverSlos: true
+    kubeControllerManager: true
+    kubelet: true
+    kubeProxy: true
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeSchedulerAlerting: true
+    kubeSchedulerRecording: true
+    kubeStateMetrics: true
+    network: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
+    windows: true
+
+  # Defines the operator for namespace selection in rules
+  # Use "=~" to include namespaces matching the pattern (default)
+  # Use "!~" to exclude namespaces matching the pattern
+  appNamespacesOperator: "=~"
+
+  ## Reduce app namespace alert scope
+  appNamespacesTarget: ".*"
+
+  ## Set keep_firing_for for all alerts
+  keepFiringFor: ""
+
+##
+global:
+  rbac:
+    create: true
+
+   
+alertmanager:
+
+  ## Deploy alertmanager
+  ##
+  enabled: false
+
+## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
+##
 grafana:
   enabled: false
 
-alertmanager:
-  enabled: false
-
-# Enable kube-state-metrics
-kubeStateMetrics:
+kubernetesServiceMonitors:
   enabled: true
 
-# Enable node-exporter
-nodeExporter:
+## Component scraping the kube api server
+##
+kubeApiServer:
   enabled: true
+
+prometheusOperator:
+  enabled: true
+  ## Ensure CRDs are installed before operator
+  admissionWebhooks:
+    enabled: true
+    patch:
+      enabled: true
+
+
+prometheus:
+  enabled: true
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+    automountServiceAccountToken: true

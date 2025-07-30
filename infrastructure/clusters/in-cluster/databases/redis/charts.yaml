@@ -1,0 +1,3 @@
+repoURL: https://charts.bitnami.com/bitnami
+chart: redis
+targetRevision: 21.2.13 

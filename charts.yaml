@@ -1,0 +1,21 @@
+appCharts:
+  kong-ingress:
+    repoURL: https://charts.konghq.com
+    chart: ingress
+    targetRevision: 0.21.0
+  blackbox-exporter:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: blackbox-exporter
+    targetRevision: 11.1.1
+  prometheus:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 55.0.0
+  redis:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: redis
+    targetRevision: 21.2.13
+  k8s-service:
+    repoURL: https://helmcharts.gruntwork.io
+    chart: k8s-service
+    targetRevision: 0.2.29
