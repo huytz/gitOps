@@ -1,0 +1,147 @@
+
+global:
+  enabled: true
+injector:
+  enabled: "true"
+  replicas: 1
+  port: 8080
+  leaderElector:
+    enabled: true
+
+  metrics:
+    enabled: true
+
+  image:
+    repository: "hashicorp/vault-k8s"
+    tag: "1.7.0"
+    pullPolicy: IfNotPresent
+
+  agentImage:
+    repository: "hashicorp/vault"
+    tag: "1.20.1"
+
+  agentDefaults:
+    cpuLimit: "500m"
+    cpuRequest: "250m"
+    memLimit: "128Mi"
+    memRequest: "64Mi"
+
+    template: "map"
+
+    # Default values within Agent's template_config stanza.
+    templateConfig:
+      exitOnRetryFailure: true
+      staticSecretRenderInterval: ""
+
+  livenessProbe:
+    failureThreshold: 2
+    initialDelaySeconds: 5
+    periodSeconds: 2
+    successThreshold: 1
+    timeoutSeconds: 5
+  readinessProbe:
+    failureThreshold: 2
+    initialDelaySeconds: 5
+    periodSeconds: 2
+    successThreshold: 1
+    timeoutSeconds: 5
+  startupProbe:
+    failureThreshold: 12
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 5
+
+  authPath: "auth/kubernetes"
+
+  logLevel: "info"
+
+  logFormat: "standard"
+
+  revokeOnShutdown: false
+
+  webhook:
+    failurePolicy: Ignore
+
+    matchPolicy: Exact
+
+    timeoutSeconds: 30
+    namespaceSelector: {}
+
+    objectSelector: |
+      matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: NotIn
+        values:
+        - {{ template "vault.name" . }}-agent-injector
+
+  affinity: |
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ template "vault.name" . }}-agent-injector
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
+              component: webhook
+          topologyKey: kubernetes.io/hostname
+
+server:
+  enabled: "true"
+  image:
+    repository: "hashicorp/vault"
+    tag: "1.20.1"
+    pullPolicy: IfNotPresent
+
+  updateStrategyType: "OnDelete"
+
+  ingress:
+    enabled: false
+
+  readinessProbe:
+    enabled: true
+   
+  livenessProbe:
+    enabled: true
+   
+
+  affinity: |
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ template "vault.name" . }}
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
+              component: server
+          topologyKey: kubernetes.io/hostname
+ 
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    mountPath: "/Users/huytz/docker-desktop-pvc/vault/data"
+    storageClass: docker-sc
+    accessMode: ReadWriteOnce
+    config: |-
+      ui = true
+
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+      storage "file" {
+        path = "/vault/data"
+      }
+
+  ha:
+    enabled: false
+    replicas: 3
+
+# Vault UI
+ui:
+  enabled: true
+  publishNotReadyAddresses: true
+  activeVaultPodOnly: false
+  serviceType: "ClusterIP"
+  serviceNodePort: null
+  externalPort: 8200
+  targetPort: 8200
