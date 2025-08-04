@@ -30,8 +30,10 @@ gitops/
     │       └── prometheus/      # Prometheus monitoring
     └── clusters/                # Cluster-specific infrastructure
         └── in-cluster/          # In-cluster resources
-            └── databases/       # Database components
-                └── redis/       # Redis database
+            ├── databases/        # Database components
+            │   └── redis/       # Redis database
+            └── secret-manager/   # Secret management
+                └── vault/        # HashiCorp Vault
 ```
 
 ## 🚀 Getting Started
@@ -72,7 +74,7 @@ gitops/
 Applications are managed through ApplicationSets that automatically discover and deploy applications based on the directory structure:
 
 - **Apps ApplicationSet** (`argocd/appset/apps.yml`): Manages application deployments
-- **Infrastructure ApplicationSet** (`argocd/appset/infrastructure.yml`): Manages infrastructure components
+- **Infrastructure ApplicationSet** (`argocd/appset/infrastructure.yml`): Manages infrastructure components with StatefulSet sync optimization
 - **Cluster Bootstrap ApplicationSet** (`argocd/appset/cluster-bootstrap.yml`): Manages cluster-level components
 
 ### Infrastructure Components
@@ -89,6 +91,16 @@ Applications are managed through ApplicationSets that automatically discover and
 - **Blackbox Exporter**: External monitoring for HTTP endpoints
   - Location: `infrastructure/cluster-bootstrap/monitoring/blackbox-exporter/`
   - Features: Uptime monitoring, response time tracking
+
+#### Secret Management
+- **HashiCorp Vault**: Enterprise-grade secret management with HA Raft cluster
+  - Location: `infrastructure/clusters/in-cluster/secret-manager/vault/`
+  - Features: 
+    - 3-node HA cluster with Raft storage
+    - Persistent Volume Claims (PVC) instead of Consul
+    - TLS disabled for internal communication
+    - Kubernetes-native deployment
+    - Auto-unsealing support (configurable)
 
 #### Databases
 - **Redis**: In-memory data structure store
@@ -137,10 +149,51 @@ Infrastructure components use standard Helm charts with custom values:
   - Retention policies
   - Alert rules
   - Grafana dashboards
+- **Vault**: Uses HashiCorp Vault Helm chart with HA configuration
+  - Raft storage with PVC
+  - 3-node cluster for high availability
+  - TLS disabled for internal communication
+  - Kubernetes service discovery
 - **Redis**: Uses Bitnami Redis chart with persistence configuration
   - Persistence settings
   - Security configurations
   - Resource limits
+
+### Vault Configuration
+
+The Vault cluster is configured for high availability with Raft storage:
+
+```yaml
+# infrastructure/clusters/in-cluster/secret-manager/vault/values.yaml
+server:
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |
+        ui = true
+        cluster_name = "vault-integrated-storage"
+        listener "tcp" {
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_disable = 1
+        }
+        storage "raft" {
+          path = "/vault/data"
+          node_id = "vault-${HOSTNAME##*-}"
+          retry_join {
+            leader_api_addr = "http://vault-0.vault-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://vault-1.vault-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://vault-2.vault-internal:8200"
+          }
+        }
+```
 
 ## 🏷️ Labeling Strategy
 
@@ -158,8 +211,23 @@ All applications use automated sync policies with:
 - **Self-Heal**: Automatically corrects drift from the desired state
 - **CreateNamespace**: Automatically creates namespaces if they don't exist
 - **Sync Options**: 
-  - `PrunePropagationPolicy: foreground`
-  - `PruneLast: true`
+  - `ServerSideApply=true`: Uses server-side apply for better conflict resolution
+  - `CreateNamespace=true`: Creates namespaces automatically
+
+### StatefulSet Sync Optimization
+
+The Infrastructure ApplicationSet includes optimized sync settings for StatefulSets:
+
+```yaml
+# argocd/appset/infrastructure.yml
+ignoreDifferences:
+  - group: apps
+    kind: StatefulSet
+    jqPathExpressions:
+      - .spec.volumeClaimTemplates[].*
+```
+
+This prevents OutOfSync status caused by Kubernetes auto-generated fields in StatefulSets.
 
 ## 🛠️ Development Workflow
 
@@ -203,7 +271,8 @@ All applications use automated sync policies with:
    repoURL: https://prometheus-community.github.io/helm-charts
    chart: prometheus-blackbox-exporter
    targetRevision: 11.1.1
-    ```
+   EOF
+   ```
 
 3. **Add Values Configuration**:
    ```bash
@@ -300,6 +369,29 @@ kubectl get applicationsets -n argocd
 kubectl logs -n argocd -l app.kubernetes.io/name=argocd-applicationset-controller
 ```
 
+#### 5. Vault Cluster Issues
+**Symptoms**: Vault pods not ready or cluster not forming
+**Solutions**:
+```bash
+# Check Vault pod status
+kubectl get pods -n secret-manager -l app.kubernetes.io/name=vault
+
+# Check Vault cluster status
+kubectl exec vault-0 -n secret-manager -- vault status
+
+# Unseal Vault nodes (if needed)
+kubectl exec vault-0 -n secret-manager -- vault operator unseal <key1>
+kubectl exec vault-0 -n secret-manager -- vault operator unseal <key2>
+kubectl exec vault-0 -n secret-manager -- vault operator unseal <key3>
+```
+
+#### 6. StatefulSet OutOfSync Issues
+**Symptoms**: StatefulSets showing OutOfSync despite working correctly
+**Solutions**:
+- This is handled automatically by the `ignoreDifferences` configuration
+- The Infrastructure ApplicationSet ignores volumeClaimTemplates status fields
+- Applications may show OutOfSync but function correctly
+
 ### Debugging Commands
 
 ```bash
@@ -317,6 +409,12 @@ argocd app manifest <app-name>
 
 # Check sync status
 argocd app sync-status <app-name>
+
+# Check Vault cluster status
+kubectl exec vault-0 -n secret-manager -- vault status
+
+# Check PVC status for StatefulSets
+kubectl get pvc -n <namespace>
 ```
 
 ## 📚 Additional Resources
@@ -326,6 +424,7 @@ argocd app sync-status <app-name>
 - [Helm Charts Documentation](https://helm.sh/docs/)
 - [Kong Ingress Documentation](https://docs.konghq.com/kubernetes-ingress-controller/)
 - [Prometheus Operator Documentation](https://prometheus-operator.dev/)
+- [HashiCorp Vault Documentation](https://www.vaultproject.io/docs)
 
 ## 🤝 Contributing
 
@@ -341,6 +440,7 @@ argocd app sync-status <app-name>
 - Verify Helm chart versions are pinned
 - Check that resource limits are appropriate
 - Confirm security best practices are followed
+- Test StatefulSet configurations thoroughly
 
 ## 📄 License
 
@@ -352,3 +452,5 @@ This project is licensed under the MIT License.
 - **v1.1.0**: Added monitoring stack (Prometheus, Blackbox Exporter)
 - **v1.2.0**: Added Kong ingress controller and Redis database
 - **v1.3.0**: Enhanced documentation and troubleshooting guides
+- **v1.4.0**: Added HashiCorp Vault with HA Raft cluster and PVC storage
+- **v1.5.0**: Optimized ApplicationSet sync policies for StatefulSets
