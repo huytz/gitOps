@@ -67,6 +67,51 @@ gitops/
    argocd app get root-projects
    ```
 
+## 🚀 Adding New Clusters
+
+### Overview
+
+This GitOps repository supports multi-cluster deployments through a structured approach that automatically bootstraps new clusters with essential infrastructure components.
+
+### Cluster Bootstrap Process
+
+#### 1. **Cluster Registration**
+
+First, register your new cluster with ArgoCD:
+
+```bash
+# Create cluster secret for ArgoCD
+kubectl create secret generic <cluster-name> \
+  --from-literal=name=<cluster-name> \
+  --from-literal=server=https://<cluster-api-server> \
+  --from-literal=config=<kubeconfig-base64> \
+  -n argocd
+
+# Label the cluster for bootstrap
+kubectl label secret <cluster-name> \
+  argocd.argoproj.io/secret-type="cluster" \
+  kubernetes.io/environment="prod" \
+  cluster.bootstrap.prometheus="true" \
+  cluster.bootstrap.vault-agent-injector="true" \
+  cluster.bootstrap.prometheus="true"
+  -n argocd
+```
+
+#### 2. **Bootstrap Applications**
+
+The following applications are automatically deployed to new clusters:
+
+##### **Monitoring Stack**
+- **Prometheus**: Remote write to mimir with tenant name base on cluster name.
+- **Blackbox Exporter**: External monitoring
+
+##### **Gateway Components**
+- **Kong Ingress Controller**: API gateway and load balancing
+- **SSL termination and rate limiting**
+
+##### **Secret Management**
+- **Vault Agent Injector**: Automatic secret injection base on cluster name.
+
 ## 📋 Components
 
 ### Application Management
@@ -256,47 +301,3 @@ webhook:
 - ✅ **Timeout Protection**: 30-second timeout prevents hanging
 - ✅ **Namespace Agnostic**: Works across all namespaces
 
-## 🚀 Adding New Clusters
-
-### Overview
-
-This GitOps repository supports multi-cluster deployments through a structured approach that automatically bootstraps new clusters with essential infrastructure components.
-
-### Cluster Bootstrap Process
-
-#### 1. **Cluster Registration**
-
-First, register your new cluster with ArgoCD:
-
-```bash
-# Create cluster secret for ArgoCD
-kubectl create secret generic <cluster-name> \
-  --from-literal=name=<cluster-name> \
-  --from-literal=server=https://<cluster-api-server> \
-  --from-literal=config=<kubeconfig-base64> \
-  -n argocd
-
-# Label the cluster for bootstrap
-kubectl label secret <cluster-name> \
-  argocd.argoproj.io/secret-type="cluster" \
-  kubernetes.io/environment="prod" \
-  cluster.bootstrap.prometheus="true" \
-  cluster.bootstrap.vault-agent-injector="true" \
-  cluster.bootstrap.prometheus="true"
-  -n argocd
-```
-
-#### 2. **Bootstrap Applications**
-
-The following applications are automatically deployed to new clusters:
-
-##### **Monitoring Stack**
-- **Prometheus**: Metrics collection and alerting
-- **Blackbox Exporter**: External monitoring
-
-##### **Gateway Components**
-- **Kong Ingress Controller**: API gateway and load balancing
-- **SSL termination and rate limiting**
-
-##### **Secret Management**
-- **Vault Agent Injector**: Automatic secret injection base on cluster name
