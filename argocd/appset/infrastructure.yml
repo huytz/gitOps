@@ -36,6 +36,7 @@ spec:
           chart: "{{.chart}}"
           targetRevision: "{{.targetRevision}}"
           helm:
+            releaseName: "{{.path.basename}}"
             valueFiles:
               - $values/{{.path.path}}/values.yaml
         - repoURL: https://github.com/huytz/gitops.git
