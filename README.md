@@ -224,233 +224,79 @@ ignoreDifferences:
   - group: apps
     kind: StatefulSet
     jqPathExpressions:
-      - .spec.volumeClaimTemplates[].*
+      - .spec.volumeClaimTemplates[].apiVersion
+      - .spec.volumeClaimTemplates[].kind
 ```
 
-This prevents OutOfSync status caused by Kubernetes auto-generated fields in StatefulSets.
+This prevents OutOfSync status caused by Kubernetes auto-generated fields in StatefulSets by ignoring specific volumeClaimTemplates fields that are managed by Kubernetes.
 
-## 🛠️ Development Workflow
+### Vault Agent Injector
 
-### Adding New Applications
+The Vault Agent Injector is a Kubernetes webhook that automatically injects Vault agents into pods:
 
-1. **Create Directory Structure**:
-   ```bash
-   mkdir -p apps/<cluster>/<namespace>/<app-name>/
-   ```
-
-2. **Add Configuration**:
-   ```bash
-   # Create values.yaml
-   cat > apps/<cluster>/<namespace>/<app-name>/values.yaml << EOF
-   applicationName: <app-name>
-   replicaCount: 1
-   containerImage:
-     repository: your-registry/your-image
-     tag: latest
-   EOF
-   ```
-
-3. **Commit and Deploy**:
-   ```bash
-   git add apps/<cluster>/<namespace>/<app-name>/
-   git commit -m "Add <app-name> application"
-   git push
-   ```
-
-### Adding New Infrastructure Components
-
-1. **Create Directory Structure**:
-   ```bash
-   mkdir -p infrastructure/clusters/<cluster>/<component-type>/<component-name>/
-   ```
-
-2. **Add Helm Chart Configuration**:
-   ```bash
-   # Create charts.yaml
-   cat > infrastructure/clusters/<cluster>/<component-type>/<component-name>/charts.yaml << EOF
-   repoURL: https://prometheus-community.github.io/helm-charts
-   chart: prometheus-blackbox-exporter
-   targetRevision: 11.1.1
-   EOF
-   ```
-
-3. **Add Values Configuration**:
-   ```bash
-   # Create values.yaml
-   cat > infrastructure/clusters/<cluster>/<component-type>/<component-name>/values.yaml << EOF
-   # Your Helm values here
-   EOF
-   ```
-
-### Modifying Existing Components
-
-1. **Edit Configuration**:
-   ```bash
-   # Edit the values.yaml file
-   vim apps/<cluster>/<namespace>/<app-name>/values.yaml
-   ```
-
-2. **Commit and Deploy**:
-   ```bash
-   git add .
-   git commit -m "Update <component-name> configuration"
-   git push
-   ```
-
-3. **Monitor Deployment**:
-   ```bash
-   argocd app sync <app-name>
-   argocd app get <app-name>
-   ```
-
-## 🔍 Monitoring and Troubleshooting
-
-### ArgoCD UI
-Access the ArgoCD UI to monitor application health and sync status:
-```bash
-# Port forward ArgoCD UI
-kubectl port-forward svc/argocd-server -n argocd 8080:443
+```yaml
+# infrastructure/cluster-bootstrap/vault-agent-injector/values.yaml
+webhook:
+  failurePolicy: Ignore
+  matchPolicy: Exact
+  timeoutSeconds: 30
+  namespaceSelector: {}
+  objectSelector: |
+    matchExpressions:
+    - key: app.kubernetes.io/name
+      operator: NotIn
+      values:
+      - vault-agent-injector
 ```
 
-### Application Health Status
+**Features:**
+- ✅ **Automatic Injection**: Injects Vault agents into pods with `vault.hashicorp.com/agent-inject: "true"`
+- ✅ **Self-Exclusion**: Prevents infinite loops by excluding the injector itself
+- ✅ **Failure Tolerance**: Pods start even if Vault injection fails
+- ✅ **Timeout Protection**: 30-second timeout prevents hanging
+- ✅ **Namespace Agnostic**: Works across all namespaces
 
-- **Healthy** ✅: Application is synced and running
-- **Degraded** ⚠️: Application has issues but is still running
-- **Failed** ❌: Application has failed to deploy
-- **Progressing** 🔄: Application is currently syncing
-- **Suspended** ⏸️: Application sync is suspended
+## 🚀 Adding New Clusters
 
-### Common Issues and Solutions
+### Overview
 
-#### 1. Sync Failures
-**Symptoms**: Application stuck in "Failed" or "Degraded" state
-**Solutions**:
-```bash
-# Check application logs
-argocd app logs <app-name>
+This GitOps repository supports multi-cluster deployments through a structured approach that automatically bootstraps new clusters with essential infrastructure components.
 
-# Check Kubernetes events
-kubectl get events --sort-by='.lastTimestamp'
+### Cluster Bootstrap Process
 
-# Force sync
-argocd app sync <app-name> --force
-```
+#### 1. **Cluster Registration**
 
-#### 2. Image Pull Errors
-**Symptoms**: Pods in "ImagePullBackOff" state
-**Solutions**:
-```bash
-# Check image pull secrets
-kubectl get secrets -n <namespace>
-
-# Verify image repository
-kubectl describe pod <pod-name> -n <namespace>
-```
-
-#### 3. Resource Constraints
-**Symptoms**: Pods in "Pending" state
-**Solutions**:
-```bash
-# Check node resources
-kubectl describe nodes
-
-# Check pod resource requests
-kubectl describe pod <pod-name> -n <namespace>
-```
-
-#### 4. ApplicationSet Issues
-**Symptoms**: Applications not being created automatically
-**Solutions**:
-```bash
-# Check ApplicationSet status
-kubectl get applicationsets -n argocd
-
-# Check ApplicationSet logs
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-applicationset-controller
-```
-
-#### 5. Vault Cluster Issues
-**Symptoms**: Vault pods not ready or cluster not forming
-**Solutions**:
-```bash
-# Check Vault pod status
-kubectl get pods -n secret-manager -l app.kubernetes.io/name=vault
-
-# Check Vault cluster status
-kubectl exec vault-0 -n secret-manager -- vault status
-
-# Unseal Vault nodes (if needed)
-kubectl exec vault-0 -n secret-manager -- vault operator unseal <key1>
-kubectl exec vault-0 -n secret-manager -- vault operator unseal <key2>
-kubectl exec vault-0 -n secret-manager -- vault operator unseal <key3>
-```
-
-#### 6. StatefulSet OutOfSync Issues
-**Symptoms**: StatefulSets showing OutOfSync despite working correctly
-**Solutions**:
-- This is handled automatically by the `ignoreDifferences` configuration
-- The Infrastructure ApplicationSet ignores volumeClaimTemplates status fields
-- Applications may show OutOfSync but function correctly
-
-### Debugging Commands
+First, register your new cluster with ArgoCD:
 
 ```bash
-# List all applications
-argocd app list
+# Create cluster secret for ArgoCD
+kubectl create secret generic <cluster-name> \
+  --from-literal=name=<cluster-name> \
+  --from-literal=server=https://<cluster-api-server> \
+  --from-literal=config=<kubeconfig-base64> \
+  -n argocd
 
-# Get detailed application info
-argocd app get <app-name>
-
-# Check application resources
-argocd app resources <app-name>
-
-# View application manifest
-argocd app manifest <app-name>
-
-# Check sync status
-argocd app sync-status <app-name>
-
-# Check Vault cluster status
-kubectl exec vault-0 -n secret-manager -- vault status
-
-# Check PVC status for StatefulSets
-kubectl get pvc -n <namespace>
+# Label the cluster for bootstrap
+kubectl label secret <cluster-name> \
+  argocd.argoproj.io/secret-type="cluster" \
+  kubernetes.io/environment="prod" \
+  cluster.bootstrap.prometheus="true" \
+  cluster.bootstrap.vault-agent-injector="true" \
+  cluster.bootstrap.prometheus="true"
+  -n argocd
 ```
 
-## 📚 Additional Resources
+#### 2. **Bootstrap Applications**
 
-- [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
-- [ApplicationSet Documentation](https://argocd-applicationset.readthedocs.io/)
-- [Helm Charts Documentation](https://helm.sh/docs/)
-- [Kong Ingress Documentation](https://docs.konghq.com/kubernetes-ingress-controller/)
-- [Prometheus Operator Documentation](https://prometheus-operator.dev/)
-- [HashiCorp Vault Documentation](https://www.vaultproject.io/docs)
+The following applications are automatically deployed to new clusters:
 
-## 🤝 Contributing
+##### **Monitoring Stack**
+- **Prometheus**: Metrics collection and alerting
+- **Blackbox Exporter**: External monitoring
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Make your changes following the development workflow
-4. Test the deployment thoroughly
-5. Submit a pull request with detailed description
+##### **Gateway Components**
+- **Kong Ingress Controller**: API gateway and load balancing
+- **SSL termination and rate limiting**
 
-### Code Review Guidelines
-
-- Ensure all applications are properly labeled
-- Verify Helm chart versions are pinned
-- Check that resource limits are appropriate
-- Confirm security best practices are followed
-- Test StatefulSet configurations thoroughly
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🔄 Version History
-
-- **v1.0.0**: Initial GitOps setup with ArgoCD and ApplicationSets
-- **v1.1.0**: Added monitoring stack (Prometheus, Blackbox Exporter)
-- **v1.2.0**: Added Kong ingress controller and Redis database
-- **v1.3.0**: Enhanced documentation and troubleshooting guides
-- **v1.4.0**: Added HashiCorp Vault with HA Raft cluster and PVC storage
-- **v1.5.0**: Optimized ApplicationSet sync policies for StatefulSets
+##### **Secret Management**
+- **Vault Agent Injector**: Automatic secret injection

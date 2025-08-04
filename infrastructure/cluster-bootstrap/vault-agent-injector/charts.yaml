@@ -1,0 +1,3 @@
+repoURL: https://helm.releases.hashicorp.com
+chart: vault
+targetRevision: 0.30.1
