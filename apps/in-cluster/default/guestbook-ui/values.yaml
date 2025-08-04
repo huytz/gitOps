@@ -14,8 +14,8 @@ ingress:
   enabled: false
 
 # Override the container command to source the Vault secrets
-containerCommand: ["/bin/bash", "-c"]
-containerArgs: ["source /vault/secrets/config && exec docker-php-entrypoint apache2-foreground"]
+# containerCommand: ["/bin/bash", "-c"]
+# containerArgs: ["source /vault/secrets/config && exec docker-php-entrypoint apache2-foreground"]
 
 # Service Account configuration for Vault auth
 serviceAccount:

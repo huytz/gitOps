@@ -1,7 +1,7 @@
 global:
-  enabled: true
+  enabled: false
 injector:
-  enabled: "true"
+  enabled: "false"
   replicas: 1
   port: 8080
   leaderElector:
@@ -85,7 +85,7 @@ injector:
           topologyKey: kubernetes.io/hostname
 
 server:
-  enabled: "true"
+  enabled: "false"
   image:
     repository: "hashicorp/vault"
     tag: "1.20.1"

@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: apps
+  name: apps-dev
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
@@ -14,13 +14,13 @@ spec:
           repoURL: https://github.com/huytz/gitops.git
           revision: HEAD
           directories:
-          - path: apps/*/*/*
+          - path: apps-dev/*/*/*
       # cluster generator, 'child' #2
       - clusters:
           selector:
             matchLabels:
               argocd.argoproj.io/secret-type: cluster
-              kubernetes.io/environment: prod
+              kubernetes.io/environment: dev
   
   template:
     metadata:
@@ -28,16 +28,16 @@ spec:
         argocd-image-updater.argoproj.io/image-list: ghcr.io/huytz/{{.path.basename}}
         argocd-image-updater.argoproj.io/write-back-method: git
         argocd-image-updater.argoproj.io/update-strategy: latest
-        argocd-image-updater.argoproj.io/allow-tags: regexp:^v.*$
+        argocd-image-updater.argoproj.io/allow-tags: regexp:^main-.*$
         argocd-image-updater.argoproj.io/update-interval: 5m
 
       name: '{{.name}}-{{index .path.segments 2}}-{{.path.basename}}'
       labels:
-        appset: apps
-        environment: 'prod'
+        appset: apps-dev
+        environment: 'dev'
         cluster: '{{.name}}'
     spec:
-      project: apps      
+      project: apps-dev      
       sources:
       - repoURL: https://helmcharts.gruntwork.io
         chart: 'k8s-service'
@@ -52,7 +52,7 @@ spec:
 
       destination:
         server: '{{.server}}'
-        namespace: '{{index .path.segments 2}}'
+        namespace: 'development'
       syncPolicy:
         syncOptions:
         - CreateNamespace=true

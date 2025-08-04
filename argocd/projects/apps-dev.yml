@@ -1,18 +1,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: apps
+  name: apps-dev
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: argocd
-    environment: prod
+    environment: dev
 spec:
-  description: Production project for managing applications
+  description: Development project for managing applications
   sourceRepos:
     - '*'
   destinations:
-    - namespace: '*'
-      server: '*'
+    - namespace: 'development'
+      server: 'https://kubernetes.default.svc'
   clusterResourceWhitelist:
     - group: ''
       kind: Namespace
