@@ -1,5 +1,10 @@
 injector:
   enabled: true
+
+  # External vault server address for the injector to use. Setting this will
+  # disable deployment of a vault server along with the injector.
+  externalVaultAddr: "http://vault.secret-manager.your-internal.services:8200"
+  
   replicas: 1
   port: 8080
   leaderElector:

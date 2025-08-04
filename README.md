@@ -299,4 +299,4 @@ The following applications are automatically deployed to new clusters:
 - **SSL termination and rate limiting**
 
 ##### **Secret Management**
-- **Vault Agent Injector**: Automatic secret injection
+- **Vault Agent Injector**: Automatic secret injection base on cluster name
