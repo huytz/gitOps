@@ -12,3 +12,34 @@ service:
 
 ingress:
   enabled: false
+
+# Remove the custom container command - let the original entrypoint work
+# The Vault agent will inject secrets as environment variables automatically
+containerCommand: ["/bin/bash", "-c"]
+containerArgs: ["source /vault/secrets/config/config && exec docker-php-entrypoint apache2-foreground"]
+
+# Service Account configuration for Vault auth
+serviceAccount:
+  create: true
+  name: guestbook-ui
+  annotations:
+    vault.hashicorp.com/role: "default_guestbook_ui"
+  labels:
+    app: guestbook-ui
+    vault-auth: "true"
+
+# Vault agent injection configuration
+podAnnotations:
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/agent-inject-status: "update"
+  vault.hashicorp.com/role: "default_guestbook_ui"
+  vault.hashicorp.com/agent-inject-secret-config: "secrets/data/in-cluster/default/guestbook-ui"
+  vault.hashicorp.com/secret-volume-path-config: "/vault/secrets/config"
+  vault.hashicorp.com/agent-inject-template-config: |
+    {{- with secret "secrets/data/in-cluster/default/guestbook-ui" -}}
+    {{- range $k, $v := .Data.data -}}
+    export {{ $k }}="{{ $v }}"
+    {{- end -}}
+    {{- end }}
+  # Security best practices
+  vault.hashicorp.com/agent-inject-exit-after-auth: "true"

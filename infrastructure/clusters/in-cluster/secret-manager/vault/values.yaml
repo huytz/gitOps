@@ -1,4 +1,3 @@
-
 global:
   enabled: true
 injector:
@@ -52,7 +51,7 @@ injector:
     successThreshold: 1
     timeoutSeconds: 5
 
-  authPath: "auth/kubernetes"
+  authPath: "auth/in-cluster"
 
   logLevel: "info"
 
@@ -103,7 +102,6 @@ server:
   livenessProbe:
     enabled: true
    
-
   affinity: |
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
