@@ -17,7 +17,7 @@ spec:
               repoURL: https://github.com/huytz/gitops.git
               revision: HEAD
               files:
-                - path: infrastructure/cluster-bootstrap/*/*/charts.yaml
+                - path: infrastructure/cluster-bootstrap/core/*/*.yaml
           # cluster generator
           - clusters:
               selector:
@@ -42,12 +42,7 @@ spec:
           chart: "{{.chart}}"
           targetRevision: "{{.targetRevision}}"
           helm:
-            # values: |
-            #   prometheus:
-            #     remoteWrite:
-            #       - url: https://mimir.monitoring.svc.cluster.local/api/v1/push
-            #         headers:
-            #           "X-Scope-OrgID": "{{.name}}"
+            releaseName: "{{.path.basename}}"
             valueFiles:
               - $values/{{.path.path}}/values.yaml
         - repoURL: https://github.com/huytz/gitops.git

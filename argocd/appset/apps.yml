@@ -24,7 +24,7 @@ spec:
   
   template:
     metadata:
-      name: '{{.path.basename}}'
+      name: '{{.name}}-{{index .path.segments 2}}-{{.path.basename}}'
       labels:
         appset: apps
         environment: 'prod'
@@ -36,6 +36,7 @@ spec:
         chart: 'k8s-service'
         targetRevision: "0.2.29"
         helm:
+          releaseName: '{{.path.basename}}'
           valueFiles:
           - $values/{{.path.path}}/values.yaml 
       - repoURL: https://github.com/huytz/gitops.git

@@ -117,8 +117,8 @@ server:
   dataStorage:
     enabled: true
     size: 10Gi
-    mountPath: "/Users/huytz/docker-desktop-pvc/vault/data"
-    storageClass: docker-sc
+    mountPath: "/vault/data"
+    storageClass: "standard"
     accessMode: ReadWriteOnce
     config: |-
       ui = true
