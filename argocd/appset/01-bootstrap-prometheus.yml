@@ -23,7 +23,7 @@ spec:
               selector:
                 matchLabels:
                   argocd.argoproj.io/secret-type: cluster
-                  cluster.bootstrap: "true"
+                  cluster.bootstrap.prometheus: "true"
                   kubernetes.io/environment: prod
 
   template:
