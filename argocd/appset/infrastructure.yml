@@ -49,7 +49,13 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
-
         automated:
           prune: true
           selfHeal: true
+      # Ignore differences for StatefulSets to handle volumeClaimTemplates fields
+      ignoreDifferences:
+        - group: apps
+          kind: StatefulSet
+          jqPathExpressions:
+            - .spec.volumeClaimTemplates[].apiVersion
+            - .spec.volumeClaimTemplates[].kind
