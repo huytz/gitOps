@@ -1,0 +1,47 @@
+# Default values for argocd-rbac-operator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+namespace:
+  nameOverride: ""
+  create: true
+
+argocd:
+  # The namespace where the ArgoCD instance is running
+  namespace: argocd
+  # The name of the ArgoCD RBAC ConfigMap
+  cmName: argocd-rbac-cm
+
+# Specify the Operator container image to use for the deployment.
+# For example, the following sets the image to the ``quay.io/argoprojlabs/argocd-rbac-operator`` repo.
+# The container pulls the image if not already present
+image:
+  repository: quay.io/argoprojlabs/argocd-rbac-operator
+  # Overrides the global tag whose default is the chart appVersion
+  tag: ""
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8081
+  initialDelaySeconds: 15
+  periodSeconds: 20
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8081
+  initialDelaySeconds: 5
+  periodSeconds: 10
