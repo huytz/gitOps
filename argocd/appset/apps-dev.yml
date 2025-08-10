@@ -25,7 +25,7 @@ spec:
   template:
     metadata:
       annotations:
-        argocd-image-updater.argoproj.io/image-list: app=huytz/{{.path.basename}}
+        argocd-image-updater.argoproj.io/image-list: app=ghcr.io/huytz/{{.path.basename}}
         argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-.*$
         argocd-image-updater.argoproj.io/app.update-strategy: newest-build
         argocd-image-updater.argoproj.io/write-back-method: git
