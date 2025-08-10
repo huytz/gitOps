@@ -25,7 +25,7 @@ config:
     insecure: true
     # -- If specified, use an unencrypted HTTP connection to the Argo CD API instead of TLS.
     plaintext: true
-    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhbGljZTphcGlLZXkiLCJuYmYiOjE3NTQ4MjM1NTMsImlhdCI6MTc1NDgyMzU1MywianRpIjoiNDdiYzAwZTUtYTUzMC00YTE1LTk0YzItMTBkNWU1NDgxYzlhIn0.5JEy-sT_HU3t4aCriaCteMWxUWplBmO1W2TQVGdOXZ0"
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJpbWFnZS11cGRhdGVyOmFwaUtleSIsIm5iZiI6MTc1NDg0MDA0OSwiaWF0IjoxNzU0ODQwMDQ5LCJqdGkiOiI0MzBhYjIyOS01ODFhLTQ5MjYtYTI3Mi1iMzcyMDgxZWJmNjUifQ.CkEJRYSWfxSAsycm_AGX6J3VfsEfMNU6CgMy1ngd520"
     # -- Name of the Secret containing the token
     tokenSecretName: "argocd-image-updater-secret"
 
@@ -55,7 +55,6 @@ config:
   platforms: "linux/amd64"
   
   registries: []
-  
   sshConfig:
     # -- Name of the sshConfig ConfigMap
     name: argocd-image-updater-ssh-config

@@ -1,0 +1,28 @@
+apiVersion: rbac-operator.argoproj-labs.io/v1alpha1
+kind: ArgoCDRole
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-rbac-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: image-updater
+  namespace: argocd
+spec:
+  rules:
+  - resource: "applications"
+    verbs: ["get", "create", "update"]
+    objects: ["*/*"]
+--- 
+apiVersion: rbac-operator.argoproj-labs.io/v1alpha1
+kind: ArgoCDRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-rbac-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: image-updater-binding
+  namespace: argocd
+spec:
+  subjects:
+  - kind: "local"
+    name: "image-updater"
+  argocdRoleRef:
+    name: "image-updater"
