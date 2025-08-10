@@ -49,6 +49,11 @@ config:
 
   # -- Argo CD Image Update log level
   logLevel: "debug"
+  
+  # -- Platform preferences for image selection
+  # This fixes the platform compatibility issue where darwin/amd64 is requested but only linux images exist
+  platforms: "linux/amd64"
+  
   registries: []
   
   sshConfig:

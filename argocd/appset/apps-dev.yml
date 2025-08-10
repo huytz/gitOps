@@ -25,13 +25,15 @@ spec:
   template:
     metadata:
       annotations:
-        argocd-image-updater.argoproj.io/image-list: ghcr.io/huytz/{{.path.basename}}
-        argocd-image-updater.argoproj.io/write-back-method: git
-        argocd-image-updater.argoproj.io/update-strategy: latest
         argocd-image-updater.argoproj.io/allow-tags: regexp:^main-.*$
-        argocd-image-updater.argoproj.io/update-interval: 5m
+        argocd-image-updater.argoproj.io/image-list: ghcr.io/huytz/{{.path.basename}}
+        argocd-image-updater.argoproj.io/update-interval: 1m
+        argocd-image-updater.argoproj.io/update-strategy: latest
+        argocd-image-updater.argoproj.io/write-back-method: git
+        argocd-image-updater.argoproj.io/git-branch: main
+        argocd-image-updater.argoproj.io/git-repository: git@github.com:huytz/gitops.git
         argocd-image-updater.argoproj.io/write-back-target: "helmvalues:/{{.path.path}}/values.yaml"
-
+      
       name: '{{.name}}-{{index .path.segments 2}}-{{.path.basename}}'
       labels:
         appset: apps-dev
