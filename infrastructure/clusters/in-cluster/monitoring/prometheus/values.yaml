@@ -21,7 +21,6 @@ global:
 
    
 alertmanager:
-
   ## Deploy alertmanager
   ##
   enabled: false

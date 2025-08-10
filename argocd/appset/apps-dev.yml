@@ -20,7 +20,7 @@ spec:
           selector:
             matchLabels:
               argocd.argoproj.io/secret-type: cluster
-              kubernetes.io/environment: dev
+              kubernetes.io/app: apps-dev
   
   template:
     metadata:
@@ -30,6 +30,7 @@ spec:
         argocd-image-updater.argoproj.io/update-strategy: latest
         argocd-image-updater.argoproj.io/allow-tags: regexp:^main-.*$
         argocd-image-updater.argoproj.io/update-interval: 5m
+        argocd-image-updater.argoproj.io/write-back-target: "helmvalues:/{{.path.path}}/values.yaml"
 
       name: '{{.name}}-{{index .path.segments 2}}-{{.path.basename}}'
       labels:

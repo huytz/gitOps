@@ -2,7 +2,7 @@ applicationName: webapp
 replicaCount: 1
 containerImage:
   repository: ghcr.io/huytz/webapp
-  tag: main-3400aea
+  tag: main-6874b48
   pullPolicy: IfNotPresent
 
 containerPort: 3000

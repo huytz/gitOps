@@ -12,21 +12,20 @@ config:
   # -- Name of the ConfigMap
   name: argocd-image-updater-config
   # -- API kind that is used to manage Argo CD applications (`kubernetes` or `argocd`)
-  applicationsAPIKind: ""
+  applicationsAPIKind: "argocd"
 
   # Described in detail here https://argocd-image-updater.readthedocs.io/en/stable/install/reference/#flags
   # Note: this is only relevant if config.applicationsAPIKind == 'argocd'
   argocd:
     # -- Use the gRPC-web protocol to connect to the Argo CD API
-    grpcWeb: true
+    grpcWeb: false
     # -- Connect to the Argo CD API server at server address
-    serverAddress: ""
+    serverAddress: "argocd-server.argocd.svc.cluster.local:80"
     # -- If specified, the certificate of the Argo CD API server is not verified.
-    insecure: false
+    insecure: true
     # -- If specified, use an unencrypted HTTP connection to the Argo CD API instead of TLS.
-    plaintext: false
-    # -- If specified, the secret with Argo CD API key will be created.
-    token: ""
+    plaintext: true
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhbGljZTphcGlLZXkiLCJuYmYiOjE3NTQ4MjM1NTMsImlhdCI6MTc1NDgyMzU1MywianRpIjoiNDdiYzAwZTUtYTUzMC00YTE1LTk0YzItMTBkNWU1NDgxYzlhIn0.5JEy-sT_HU3t4aCriaCteMWxUWplBmO1W2TQVGdOXZ0"
     # -- Name of the Secret containing the token
     tokenSecretName: "argocd-image-updater-secret"
 
@@ -34,25 +33,25 @@ config:
   disableKubeEvents: false
 
   # -- Username to use for Git commits
-  gitCommitUser: ""
+  gitCommitUser: "huytz"
 
   # -- E-Mail address to use for Git commits
   gitCommitMail: ""
 
   # -- Changing the Git commit message
-  gitCommitTemplate: ""
+  gitCommitTemplate: "feat: update {{.AppName}} to {{.ImageName}}:{{.Tag}} ({{.PrevTag}} -> {{.Tag}})"
 
   # -- Path to public SSH key mounted in container, or GPG key ID used to sign commits
-  gitCommitSigningKey: ""
+  gitCommitSigningKey: "/app/ssh-keys/id_rsa"
 
   # -- Enables sign off on commits
-  gitCommitSignOff: false
+  gitCommitSignOff: true
 
   # -- Method used to sign Git commits. `openpgp` or `ssh`
-  gitCommitSigningMethod: ""
+  gitCommitSigningMethod: "ssh"
 
   # -- Argo CD Image Update log level
-  logLevel: "info"
+  logLevel: "debug"
 
   # -- Argo CD Image Updater registries list configuration. More information [here](https://argocd-image-updater.readthedocs.io/en/stable/configuration/registries/).
   registries: []
@@ -89,37 +88,16 @@ config:
     # -- Name of the sshConfig ConfigMap
     name: argocd-image-updater-ssh-config
     # -- Argo CD Image Updater ssh client parameter configuration
-    config: ""
-    #  config: |
-    #    Host *
-    #          PubkeyAcceptedAlgorithms +ssh-rsa
-    #          HostkeyAlgorithms +ssh-rsa
+    config: |
+      Host *
+        PubkeyAcceptedAlgorithms +ssh-rsa
+        HostkeyAlgorithms +ssh-rsa
 
 # whether to mount authentication scripts, if enabled, the authentication scripts will be mounted on /scripts that can be used to authenticate with registries (Azure, ECR)
 # refer to https://argocd-image-updater.readthedocs.io/en/stable/configuration/registries/#specifying-credentials-for-accessing-container-registries for more info
 authScripts:
   # -- Whether to mount the defined scripts that can be used to authenticate with a registry, the scripts will be mounted at `/scripts`
   enabled: false
-  # -- Name of the authentication scripts ConfigMap
-  name: argocd-image-updater-authscripts
-  # -- Map of key-value pairs where the key consists of the name of the script and the value the contents.
-  ## Expect the script to output Docker credentials in the form: <username>:<password>
-  ## Authentication scripts can be used for various cloud providers like ECR or Azure Workload Identity.
-  ## For Azure Workload Identity, you can place your authentication script here to handle token acquisition.
-  scripts: {}
-    # auth1.sh: |
-    #   #!/bin/sh
-    #   echo "auth script 1 here"
-    # auth2.sh: |
-    #   #!/bin/sh
-    #   echo "auth script 2 here"
-    # azure-workload-identity.sh: |
-    #   #!/bin:sh
-    #   # Example script for Azure Workload Identity.
-    #   # This script would typically use environment variables set by the workload identity
-    #   # to acquire an Azure AD token and authenticate with Azure Container Registry (ACR).
-    #   # It should output the Docker username and password on stdout, e.g., '00000000-0000-0000-0000-000000000000:<token>'
-
 
 rbac:
   # -- Enable RBAC creation
