@@ -6,7 +6,7 @@
 replicaCount: 1
 
 namespace:
-  nameOverride: ""
+  nameOverride: "argocd"
   create: true
 
 argocd:
