@@ -27,7 +27,7 @@ spec:
       annotations:
         argocd-image-updater.argoproj.io/image-list: app=ghcr.io/huytz/{{.path.basename}}
         argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-[0-9a-f]{7}$
-        argocd-image-updater.argoproj.io/app.update-strategy: alphabetical
+        argocd-image-updater.argoproj.io/app.update-strategy: newest-build
         argocd-image-updater.argoproj.io/app.platform: linux/amd64
         
         # Helm parameters for image update
