@@ -7,38 +7,12 @@ This repository contains the GitOps configuration for managing Kubernetes cluste
 ```
 gitops/
 ├── _bootstraps/                    # Root ArgoCD applications
-│   ├── root-argocd-appset.yml     # Bootstraps ApplicationSet controller
-│   └── root-projects.yml          # Bootstraps ArgoCD projects
 ├── argocd/                        # ArgoCD configuration
 │   ├── appset/                    # ApplicationSet definitions
-│   │   ├── apps.yml              # Production application applications
-│   │   ├── apps-dev.yml          # Development application applications
-│   │   ├── cluster-bootstrap.yml # Cluster bootstrap applications
-│   │   └── infrastructure.yml    # Infrastructure applications
 │   └── projects/                  # ArgoCD project definitions
-│       ├── apps.yml              # Apps project
-│       └── infrastructure.yml    # Infrastructure project
 ├── apps/                         # Production application configurations
-│   └── in-cluster/              # In-cluster applications
-│       └── default/             # Default namespace
-│           └── guestbook-ui/    # Guestbook UI application
 ├── apps-dev/                     # Development application configurations
-│   └── in-cluster/              # In-cluster applications
-│       └── development/         # Development namespace
-│           └── webapp/          # Web application
 └── infrastructure/               # Infrastructure components
-    ├── cluster-bootstrap/        # Cluster bootstrap components
-    │   ├── gateway/             # Gateway components
-    │   │   └── kong-ingress/   # Kong ingress controller
-    │   └── monitoring/          # Monitoring stack
-    │       ├── blackbox-exporter/ # Blackbox exporter
-    │       └── prometheus/      # Prometheus monitoring
-    └── clusters/                # Cluster-specific infrastructure
-        └── in-cluster/          # In-cluster resources
-            ├── databases/        # Database components
-            │   └── redis/       # Redis database
-            └── secret-manager/   # Secret management
-                └── vault/        # HashiCorp Vault
 ```
 
 ## 🚀 Getting Started
@@ -48,221 +22,169 @@ gitops/
 - Kubernetes cluster with ArgoCD installed
 - ArgoCD CLI tools (`argocd`)
 - `kubectl` configured for your cluster
-- Access to the target cluster
 
 ### Bootstrap Process
 
-1. **Deploy Root Applications**: The bootstrap process starts with deploying the root applications that manage the rest of the GitOps pipeline.
+1. **Deploy Root Applications**:
 
    ```bash
-   # Apply root applications
    kubectl apply -f _bootstraps/root-argocd-appset.yml
    kubectl apply -f _bootstraps/root-projects.yml
    ```
 
-2. **ApplicationSet Controller**: The `root-argocd-appset.yml` deploys the ApplicationSet controller which enables the use of ApplicationSets for dynamic application generation.
-
-3. **Project Management**: The `root-projects.yml` deploys ArgoCD projects that organize applications into logical groups.
-
-4. **Verify Deployment**: Check that the root applications are healthy:
+2. **Verify Deployment**:
 
    ```bash
    argocd app list
-   argocd app get root-argocd-appset
-   argocd app get root-projects
    ```
 
-## 🚀 Adding New Clusters
+## 📋 ApplicationSets
 
 ### Overview
 
-This GitOps repository supports multi-cluster deployments through a structured approach that automatically bootstraps new clusters with essential infrastructure components.
-
-### Cluster Bootstrap Process
-
-#### 1. **Cluster Registration**
-
-First, register your new cluster with ArgoCD:
-
-```bash
-# Create cluster secret for ArgoCD
-kubectl create secret generic <cluster-name> \
-  --from-literal=name=<cluster-name> \
-  --from-literal=server=https://<cluster-api-server> \
-  --from-literal=config=<kubeconfig-base64> \
-  -n argocd
-
-# Label the cluster for bootstrap
-kubectl label secret <cluster-name> \
-  argocd.argoproj.io/secret-type="cluster" \
-  kubernetes.io/environment="prod" \
-  cluster.bootstrap.prometheus="true" \
-  cluster.bootstrap.vault-agent-injector="true" \
-  cluster.bootstrap.prometheus="true"
-  -n argocd
-```
-
-#### 2. **Bootstrap Applications**
-
-The following applications are automatically deployed to new clusters:
-
-##### **Monitoring Stack**
-- **Prometheus**: Remote write to mimir with tenant name base on cluster name.
-- **Blackbox Exporter**: External monitoring
-
-##### **Gateway Components**
-- **Kong Ingress Controller**: API gateway and load balancing
-- **SSL termination and rate limiting**
-
-##### **Secret Management**
-- **Vault Agent Injector**: Automatic secret injection base on cluster name.
-
-## 📋 Components
-
-### Application Management
-
 Applications are managed through ApplicationSets that automatically discover and deploy applications based on the directory structure:
 
-- **Apps ApplicationSet** (`argocd/appset/apps.yml`): Manages production application deployments
-- **Apps-Dev ApplicationSet** (`argocd/appset/apps-dev.yml`): Manages development application deployments with automatic image updates
-- **Infrastructure ApplicationSet** (`argocd/appset/infrastructure.yml`): Manages infrastructure components with StatefulSet sync optimization
-- **Cluster Bootstrap ApplicationSet** (`argocd/appset/cluster-bootstrap.yml`): Manages cluster-level components
+- **Apps ApplicationSet** (`argocd/appset/apps.yml`): Production applications
+- **Apps-Dev ApplicationSet** (`argocd/appset/apps-dev.yml`): Development applications with automatic image updates
+- **Infrastructure ApplicationSet** (`argocd/appset/infrastructure.yml`): Infrastructure components
+- **Cluster Bootstrap ApplicationSet** (`argocd/appset/cluster-bootstrap.yml`): Cluster-level components
 
-### Infrastructure Components
-
-#### Gateway
-- **Kong Ingress Controller**: Provides ingress management and API gateway functionality
-  - Location: `infrastructure/cluster-bootstrap/gateway/kong-ingress/`
-  - Features: Load balancing, SSL termination, rate limiting
-
-#### Monitoring
-- **Prometheus Stack**: Complete monitoring solution with Prometheus, Grafana, and AlertManager
-  - Location: `infrastructure/cluster-bootstrap/monitoring/prometheus/`
-  - Features: Metrics collection, alerting, visualization
-- **Blackbox Exporter**: External monitoring for HTTP endpoints
-  - Location: `infrastructure/cluster-bootstrap/monitoring/blackbox-exporter/`
-  - Features: Uptime monitoring, response time tracking
-
-#### Secret Management
-- **HashiCorp Vault**: Enterprise-grade secret management with HA Raft cluster
-  - Location: `infrastructure/clusters/in-cluster/secret-manager/vault/`
-  - Features: 
-    - 3-node HA cluster with Raft storage
-    - Persistent Volume Claims (PVC) instead of Consul
-    - TLS disabled for internal communication
-    - Kubernetes-native deployment
-    - Auto-unsealing support (configurable)
-
-#### Databases
-- **Redis**: In-memory data structure store
-  - Location: `infrastructure/clusters/in-cluster/databases/redis/`
-  - Features: Caching, session storage, real-time analytics
-
-### Applications
-
-#### Guestbook UI
-A sample application demonstrating the GitOps workflow:
-- **Location**: `apps/in-cluster/default/guestbook-ui/`
-- **Chart**: Uses `k8s-service` Helm chart from Gruntwork
-- **Configuration**: Customized through `values.yaml`
-- **Purpose**: Demonstrates application deployment patterns
-
-#### Development Applications (Apps-Dev)
+### Apps-Dev ApplicationSet
 
 The `apps-dev` ApplicationSet manages development applications with automatic image updates:
 
-##### **Web Application**
-- **Location**: `apps-dev/in-cluster/development/webapp/`
-- **Chart**: Uses `k8s-service` Helm chart from Gruntwork
-- **Configuration**: Customized through `values.yaml`
-- **Features**: 
-  - Automatic image updates via ArgoCD Image Updater
-  - Development environment isolation
-  - Git-based configuration management
-
-##### **ApplicationSet Configuration**
-The `apps-dev` ApplicationSet (`argocd/appset/apps-dev.yml`) includes:
-
+#### **Configuration**
 ```yaml
-# Image updater annotations for automatic updates
-argocd-image-updater.argoproj.io/image-list: app=ghcr.io/huytz/{{.path.basename}}
-argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-[0-9a-f]{7}$
-argocd-image-updater.argoproj.io/app.update-strategy: alphabetical
-argocd-image-updater.argoproj.io/app.platform: linux/amd64
-argocd-image-updater.argoproj.io/app.force-update: "true"
-
-# Helm parameters for image updates
-argocd-image-updater.argoproj.io/app.helm.image-name: containerImage.repository
-argocd-image-updater.argoproj.io/app.helm.image-tag: containerImage.tag
-
-# Git write-back configuration
-argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/git-creds
-argocd-image-updater.argoproj.io/git-branch: main
-argocd-image-updater.argoproj.io/git-repository: git@github.com:huytz/gitops.git
-argocd-image-updater.argoproj.io/write-back-target: "helmvalues:/{{.path.path}}/values.yaml"
+# argocd/appset/apps-dev.yml
+spec:
+  generators:
+    - git:
+        repoURL: git@github.com:huytz/gitops.git
+        directories:
+          - path: apps-dev
+  template:
+    metadata:
+      annotations:
+        # Image updater annotations
+        argocd-image-updater.argoproj.io/image-list: app=ghcr.io/huytz/{{.path.basename}}
+        argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-[0-9a-f]{7}$
+        argocd-image-updater.argoproj.io/app.update-strategy: alphabetical
+        argocd-image-updater.argoproj.io/app.platform: linux/amd64
+        argocd-image-updater.argoproj.io/app.force-update: "true"
+        
+        # Helm parameters
+        argocd-image-updater.argoproj.io/app.helm.image-name: containerImage.repository
+        argocd-image-updater.argoproj.io/app.helm.image-tag: containerImage.tag
+        
+        # Git write-back
+        argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/git-creds
+        argocd-image-updater.argoproj.io/git-branch: main
+        argocd-image-updater.argoproj.io/git-repository: git@github.com:huytz/gitops.git
+        argocd-image-updater.argoproj.io/write-back-target: "helmvalues:/{{.path.path}}/values.yaml"
 ```
 
-**Features:**
+#### **Features**
 - ✅ **Automatic Image Updates**: Monitors container registries for new image tags
 - ✅ **Tag Filtering**: Only updates to `main-*` tags matching 7-character hex commit hashes
 - ✅ **Alphabetical Strategy**: Updates to the latest commit hash when sorted alphabetically
 - ✅ **Git Write-Back**: Automatically commits changes to the Git repository
 - ✅ **Platform Compatibility**: Configured for `linux/amd64` platform
-- ✅ **Development Isolation**: Separate namespace and configuration from production
 
-## 🔧 Configuration
+## 🔄 Automatic Image Update Example
 
-### Application Configuration
+### Complete Workflow: Webapp Repository
 
-Applications are configured using Helm values files located in their respective directories. For example:
+This example demonstrates the complete automated workflow from a commit to the [webapp repository](https://github.com/huytz/webapp) to automatic deployment:
 
+#### **1. Application Configuration**
 ```yaml
-# apps/in-cluster/default/guestbook-ui/values.yaml
-applicationName: guestbook-ui
+# apps-dev/in-cluster/development/webapp/values.yaml
+applicationName: webapp
 replicaCount: 1
 containerImage:
-  repository: gcr.io/google-samples/gb-frontend
-  tag: v5
+  repository: ghcr.io/huytz/webapp
+  tag: main-7ceb248  # Current image tag
+  pullPolicy: IfNotPresent
+containerPort: 3000
 service:
   type: ClusterIP
-  port: 80
+  port: 3000
 ingress:
-  enabled: true
-  className: kong
+  enabled: false
 ```
 
-### Infrastructure Configuration
+#### **2. GitHub Actions Workflow (in webapp repo)**
+```yaml
+# .github/workflows/build-and-push.yml
+name: Build and Push Image
 
-Infrastructure components use standard Helm charts with custom values:
+on:
+  push:
+    branches: [main]
 
-- **Kong Ingress**: Uses Kong Helm chart with custom configuration
-  - SSL configuration
-  - Plugin management
-  - Resource limits
-- **Prometheus**: Uses kube-prometheus-stack with monitoring configuration
-  - Retention policies
-  - Alert rules
-  - Grafana dashboards
-- **Vault**: Uses HashiCorp Vault Helm chart with HA configuration
-  - Raft storage with PVC
-  - 3-node cluster for high availability
-  - TLS disabled for internal communication
-  - Kubernetes service discovery
-- **Redis**: Uses Bitnami Redis chart with persistence configuration
-  - Persistence settings
-  - Security configurations
-  - Resource limits
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/huytz/webapp:main-${{ github.sha }}
+            ghcr.io/huytz/webapp:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+```
 
-### ArgoCD Image Updater Configuration
+#### **3. Automatic Update Process**
 
-The ArgoCD Image Updater automatically updates container images in applications based on configured policies:
+1. **Developer pushes to main branch** in [webapp repository](https://github.com/huytz/webapp)
+2. **GitHub Actions builds and pushes** new image with tag `main-<commit-hash>`
+3. **ArgoCD Image Updater detects** new image tag matching pattern `^main-[0-9a-f]{7}$`
+4. **Image updater updates** the `values.yaml` file with new tag
+5. **Git commit is created** automatically with message: `feat: update webapp to ghcr.io/huytz/webapp:main-abc1234 (main-7ceb248 -> main-abc1234)`
+6. **ArgoCD syncs** the application with new image
+7. **Application deploys** with updated image
 
-#### **Configuration Location**
-- **Values File**: `infrastructure/clusters/in-cluster/argocd/argocd-image-updater/values.yaml`
-- **ConfigMap**: `argocd-image-updater-config` in the `argocd` namespace
+#### **4. Example Update Flow**
+```bash
+# Before update
+containerImage:
+  repository: ghcr.io/huytz/webapp
+  tag: main-7ceb248
+
+# After new commit (abc1234) to webapp repo
+containerImage:
+  repository: ghcr.io/huytz/webapp
+  tag: main-abc1234  # Automatically updated
+```
+
+#### **5. Monitoring the Process**
+```bash
+# Check image updater logs
+kubectl logs -n argocd deployment/argocd-image-updater
+
+# Check application sync status
+argocd app get webapp -o yaml
+
+# View recent commits in gitops repo
+git log --oneline -10
+```
+
+## 🔧 ArgoCD Image Updater
+
+### Configuration
+
+The ArgoCD Image Updater automatically updates container images in applications based on configured policies.
 
 #### **Key Configuration**
-
 ```yaml
 # infrastructure/clusters/in-cluster/argocd/argocd-image-updater/values.yaml
 config:
@@ -271,28 +193,17 @@ config:
     serverAddress: "argocd-server.argocd.svc.cluster.local:80"
     insecure: true
     plaintext: true
-    token: "<argocd-api-token>"
   
   # Git commit configuration
   gitCommitUser: "huytz"
   gitCommitTemplate: "feat: update {{.AppName}} to {{.Image}}:{{.Tag}} ({{.PrevTag}} -> {{.Tag}})"
   
-  # Platform preferences for image selection
+  # Platform preferences
   platforms: "linux/amd64"
   
   # Logging
   logLevel: "debug"
 ```
-
-#### **Features**
-- ✅ **Automatic Image Monitoring**: Polls container registries for new image tags
-- ✅ **Git Write-Back**: Commits changes directly to Git repositories
-- ✅ **Platform Compatibility**: Handles multi-platform image manifests
-- ✅ **Tag Filtering**: Supports regex patterns for tag selection
-- ✅ **Update Strategies**: Multiple strategies (alphabetical, newest-build, semver)
-- ✅ **Helm Integration**: Updates Helm chart values automatically
-- ✅ **Kustomize Support**: Updates Kustomize-based applications
-- ✅ **RBAC Integration**: Respects ArgoCD RBAC policies
 
 #### **Update Strategies**
 - **`alphabetical`**: Sorts tags alphabetically and picks the last one
@@ -300,56 +211,12 @@ config:
 - **`semver`**: Semantic versioning-based updates
 - **`digest`**: Updates to the most recent digest of a mutable tag
 
-#### **Platform Compatibility**
-The image updater is configured to handle platform mismatches:
-- **Issue**: Updater running on `darwin/arm64` trying to read `linux` image metadata
-- **Solution**: Platform annotation `linux/amd64` in application configurations
-- **Fallback**: `alphabetical` strategy when metadata reading fails
-
-### Vault Configuration
-
-The Vault cluster is configured for high availability with Raft storage:
-
-```yaml
-# infrastructure/clusters/in-cluster/secret-manager/vault/values.yaml
-server:
-  ha:
-    enabled: true
-    replicas: 3
-    raft:
-      enabled: true
-      setNodeId: true
-      config: |
-        ui = true
-        cluster_name = "vault-integrated-storage"
-        listener "tcp" {
-          address = "[::]:8200"
-          cluster_address = "[::]:8201"
-          tls_disable = 1
-        }
-        storage "raft" {
-          path = "/vault/data"
-          node_id = "vault-${HOSTNAME##*-}"
-          retry_join {
-            leader_api_addr = "http://vault-0.vault-internal:8200"
-          }
-          retry_join {
-            leader_api_addr = "http://vault-1.vault-internal:8200"
-          }
-          retry_join {
-            leader_api_addr = "http://vault-2.vault-internal:8200"
-          }
-        }
-```
-
-## 🏷️ Labeling Strategy
-
-Applications are automatically labeled based on:
-- `appset`: The ApplicationSet that manages them
-- `environment`: The target environment (e.g., `prod`, `staging`)
-- `cluster`: The target cluster name
-- `namespace`: The Kubernetes namespace
-- `app`: The application name
+#### **Features**
+- ✅ **Automatic Image Monitoring**: Polls container registries for new image tags
+- ✅ **Git Write-Back**: Commits changes directly to Git repositories
+- ✅ **Platform Compatibility**: Handles multi-platform image manifests
+- ✅ **Tag Filtering**: Supports regex patterns for tag selection
+- ✅ **Helm Integration**: Updates Helm chart values automatically
 
 ## 🔄 Sync Policy
 
@@ -375,34 +242,6 @@ ignoreDifferences:
       - .spec.volumeClaimTemplates[].kind
 ```
 
-This prevents OutOfSync status caused by Kubernetes auto-generated fields in StatefulSets by ignoring specific volumeClaimTemplates fields that are managed by Kubernetes.
-
-### Vault Agent Injector
-
-The Vault Agent Injector is a Kubernetes webhook that automatically injects Vault agents into pods:
-
-```yaml
-# infrastructure/cluster-bootstrap/vault-agent-injector/values.yaml
-webhook:
-  failurePolicy: Ignore
-  matchPolicy: Exact
-  timeoutSeconds: 30
-  namespaceSelector: {}
-  objectSelector: |
-    matchExpressions:
-    - key: app.kubernetes.io/name
-      operator: NotIn
-      values:
-      - vault-agent-injector
-```
-
-**Features:**
-- ✅ **Automatic Injection**: Injects Vault agents into pods with `vault.hashicorp.com/agent-inject: "true"`
-- ✅ **Self-Exclusion**: Prevents infinite loops by excluding the injector itself
-- ✅ **Failure Tolerance**: Pods start even if Vault injection fails
-- ✅ **Timeout Protection**: 30-second timeout prevents hanging
-- ✅ **Namespace Agnostic**: Works across all namespaces
-
 ## 🔧 Troubleshooting
 
 ### ArgoCD Image Updater Issues
@@ -427,15 +266,6 @@ can't evaluate field ImageName in type argocd.commitMessageTemplate
 gitCommitTemplate: "feat: update {{.AppName}} to {{.Image}}:{{.Tag}} ({{.PrevTag}} -> {{.Tag}})"
 ```
 
-#### **Image Not Found**
-```
-Image 'image-name' seems not to be live in this application, skipping
-```
-
-**Solution**: Verify image name in annotation matches actual image in values.yaml:
-- Annotation: `app=ghcr.io/huytz/webapp`
-- Values: `repository: ghcr.io/huytz/webapp`
-
 ### Best Practices
 
 #### **Image Update Configuration**
@@ -448,11 +278,4 @@ Image 'image-name' seems not to be live in this application, skipping
 1. **Use SSH Authentication**: Configure SSH keys for secure Git access
 2. **Set Commit User**: Configure `gitCommitUser` for proper attribution
 3. **Custom Commit Messages**: Use templates for consistent commit messages
-4. **Branch Protection**: Ensure target branch allows automated commits
-
-#### **Monitoring and Logging**
-1. **Enable Debug Logging**: `logLevel: "debug"` for troubleshooting
-2. **Monitor Update Cycles**: Check logs for successful updates
-3. **Track Metrics**: Enable metrics for monitoring update frequency
-4. **Health Checks**: Monitor image updater pod health
 
