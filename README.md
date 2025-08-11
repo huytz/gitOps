@@ -196,7 +196,7 @@ config:
   
   # Git commit configuration
   gitCommitUser: "huytz"
-  gitCommitTemplate: "feat: update {{.AppName}} to {{.Image}}:{{.Tag}} ({{.PrevTag}} -> {{.Tag}})"
+  gitCommitTemplate: "feat: update {{.AppName}} to {{.Image}}:{{.NewTag}} ({{.OldTag}} -> {{.NewTag}})"
   
   # Platform preferences
   platforms: "linux/amd64"
@@ -258,12 +258,12 @@ argocd-image-updater.argoproj.io/app.platform: linux/amd64
 
 #### **Template Errors**
 ```
-can't evaluate field ImageName in type argocd.commitMessageTemplate
+can't evaluate field Image in type argocd.commitMessageTemplate
 ```
 
-**Solution**: Use correct template variables:
+**Solution**: Use correct template variables based on [official documentation](https://argocd-image-updater.readthedocs.io/en/stable/basics/update-methods/#changing-the-git-commit-message):
 ```yaml
-gitCommitTemplate: "feat: update {{.AppName}} to {{.Image}}:{{.Tag}} ({{.PrevTag}} -> {{.Tag}})"
+gitCommitTemplate: "feat: update {{.AppName}} to {{.Image}}:{{.NewTag}} ({{.OldTag}} -> {{.NewTag}})"
 ```
 
 ### Best Practices

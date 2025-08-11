@@ -29,7 +29,12 @@ config:
   gitCommitMail: ""
 
   # -- Changing the Git commit message
-  gitCommitTemplate: "feat: update {{.AppName}} to {{.Image}}:{{.Tag}} ({{.PrevTag}} -> {{.Tag}})"
+  gitCommitTemplate: |
+    build: automatic update of {{ .AppName }}
+
+    {{ range .AppChanges -}}
+    updates image {{ .Image }} tag '{{ .OldTag }}' to '{{ .NewTag }}'
+    {{ end -}}
 
   # -- Enables sign off on commits
   gitCommitSignOff: false
