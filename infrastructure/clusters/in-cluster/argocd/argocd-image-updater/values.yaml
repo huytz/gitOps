@@ -11,17 +11,11 @@ image:
 config:
   # -- Name of the ConfigMap
   name: argocd-image-updater-config
+  
   # -- API kind that is used to manage Argo CD applications (`kubernetes` or `argocd`)
   applicationsAPIKind: "kubernetes"
 
-  # Described in detail here https://argocd-image-updater.readthedocs.io/en/stable/install/reference/#flags
-  # Note: this is only relevant if config.applicationsAPIKind == 'argocd'
-  argocd:
-    # -- Use the gRPC-web protocol to connect to the Argo CD API
-    grpcWeb: false
-  # -- Disable kubernetes events
   disableKubeEvents: false
-
   # -- Username to use for Git commits
   gitCommitUser: "huytz"
 
@@ -33,7 +27,7 @@ config:
     build: automatic update of {{ .AppName }}
 
     {{ range .AppChanges -}}
-    updates image {{ .Image }} tag '{{ .OldTag }}' to '{{ .NewTag }}'
+    updates image {{ .Image }} tag to '{{ .NewTag }}'
     {{ end -}}
 
   # -- Enables sign off on commits
@@ -59,11 +53,6 @@ config:
         PubkeyAcceptedAlgorithms +ssh-rsa
         HostkeyAlgorithms +ssh-rsa
 
-# whether to mount authentication scripts, if enabled, the authentication scripts will be mounted on /scripts that can be used to authenticate with registries (Azure, ECR)
-# refer to https://argocd-image-updater.readthedocs.io/en/stable/configuration/registries/#specifying-credentials-for-accessing-container-registries for more info
-authScripts:
-  # -- Whether to mount the defined scripts that can be used to authenticate with a registry, the scripts will be mounted at `/scripts`
-  enabled: false
 
 rbac:
   # -- Enable RBAC creation

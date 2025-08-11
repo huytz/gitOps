@@ -11,7 +11,7 @@ spec:
   - resource: "applications"
     verbs: ["get", "create", "update"]
     objects: ["*/*"]
---- 
+---
 apiVersion: rbac-operator.argoproj-labs.io/v1alpha1
 kind: ArgoCDRoleBinding
 metadata:

@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: apps-dev
+  name: apps-prod
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
@@ -14,19 +14,19 @@ spec:
           repoURL: https://github.com/huytz/gitops.git
           revision: HEAD
           directories:
-          - path: apps/development/*/*
+          - path: apps/production/*/*/*
       # cluster generator, 'child' #2
       - clusters:
           selector:
             matchLabels:
               argocd.argoproj.io/secret-type: cluster
-              kubernetes.io/environment: 'development'
+              kubernetes.io/environment: production
   
   template:
     metadata:
       annotations:
         argocd-image-updater.argoproj.io/image-list: app=ghcr.io/huytz/{{.path.basename}}
-        argocd-image-updater.argoproj.io/app.allow-tags: regexp:^develop-[0-9a-f]{7}$
+        argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-[0-9a-f]{7}$
         argocd-image-updater.argoproj.io/app.update-strategy: newest-build
         argocd-image-updater.argoproj.io/app.platform: linux/amd64
         
@@ -39,14 +39,14 @@ spec:
         argocd-image-updater.argoproj.io/git-branch: main
         argocd-image-updater.argoproj.io/git-repository: git@github.com:huytz/gitops.git
         argocd-image-updater.argoproj.io/write-back-target: "helmvalues:/{{.path.path}}/values.yaml"
-        
-      name: '{{.name}}-{{index .path.segments 2}}-{{.path.basename}}'
+
+      name: 'prod-{{.name}}-{{index .path.segments 3}}-{{.path.basename}}'
       labels:
-        appset: apps-dev
-        environment: 'development'
+        appset: apps
+        environment: 'production'
         cluster: '{{.name}}'
     spec:
-      project: apps-dev      
+      project: apps-prod      
       sources:
       - repoURL: https://helmcharts.gruntwork.io
         chart: 'k8s-service'
@@ -61,7 +61,7 @@ spec:
 
       destination:
         server: '{{.server}}'
-        namespace: '{{index .path.segments 2}}'
+        namespace: '{{index .path.segments 3}}'
       syncPolicy:
         syncOptions:
         - CreateNamespace=true

@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: argocd
-    environment: dev
+    environment: development
 spec:
   description: Development project for managing applications
   sourceRepos:

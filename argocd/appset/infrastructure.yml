@@ -20,13 +20,13 @@ spec:
               selector:
                 matchLabels:
                   argocd.argoproj.io/secret-type: cluster
-                  kubernetes.io/environment: prod
+                  kubernetes.io/environment: production
   template:
     metadata:
       name: "{{.name}}-{{.path.basename}}"
       labels:
         appset: infrastructure
-        environment: "prod"
+        environment: "production"
         cluster: "{{.name}}"
     spec:
       project: infrastructure

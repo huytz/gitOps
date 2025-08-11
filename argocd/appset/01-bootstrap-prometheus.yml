@@ -24,7 +24,7 @@ spec:
                 matchLabels:
                   argocd.argoproj.io/secret-type: cluster
                   cluster.bootstrap.prometheus: "true"
-                  kubernetes.io/environment: prod
+                  kubernetes.io/environment: production
 
   template:
     metadata:
