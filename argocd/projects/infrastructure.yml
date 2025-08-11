@@ -87,9 +87,19 @@ spec:
     - group: 'monitoring.coreos.com'
       kind: PodMonitor
     - group: 'monitoring.coreos.com'
-      kind: PrometheusRule
+      kind: Prometheus
     - group: 'monitoring.coreos.com'
       kind: AlertmanagerConfig
+    - group: 'monitoring.coreos.com'
+      kind: Alertmanager
+    - group: 'monitoring.coreos.com'
+      kind: ThanosRuler
+    - group: 'monitoring.coreos.com'
+      kind: PrometheusAgent
+    - group: 'monitoring.coreos.com'
+      kind: PrometheusRule
+    - group: 'monitoring.coreos.com'
+      kind: ServiceMonitor
     # Kong namespace resources
     - group: 'konghq.com'
       kind: KongPlugin
