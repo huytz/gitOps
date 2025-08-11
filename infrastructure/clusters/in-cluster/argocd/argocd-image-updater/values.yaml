@@ -19,16 +19,6 @@ config:
   argocd:
     # -- Use the gRPC-web protocol to connect to the Argo CD API
     grpcWeb: false
-    # -- Connect to the Argo CD API server at server address
-    serverAddress: "argocd-server.argocd.svc.cluster.local:80"
-    # -- If specified, the certificate of the Argo CD API server is not verified.
-    insecure: true
-    # -- If specified, use an unencrypted HTTP connection to the Argo CD API instead of TLS.
-    plaintext: true
-    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJpbWFnZS11cGRhdGVyOmFwaUtleSIsIm5iZiI6MTc1NDg0MDA0OSwiaWF0IjoxNzU0ODQwMDQ5LCJqdGkiOiI0MzBhYjIyOS01ODFhLTQ5MjYtYTI3Mi1iMzcyMDgxZWJmNjUifQ.CkEJRYSWfxSAsycm_AGX6J3VfsEfMNU6CgMy1ngd520"
-    # -- Name of the Secret containing the token
-    tokenSecretName: "argocd-image-updater-secret"
-
   # -- Disable kubernetes events
   disableKubeEvents: false
 

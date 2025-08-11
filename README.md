@@ -11,16 +11,21 @@ gitops/
 │   └── root-projects.yml          # Bootstraps ArgoCD projects
 ├── argocd/                        # ArgoCD configuration
 │   ├── appset/                    # ApplicationSet definitions
-│   │   ├── apps.yml              # Application applications
+│   │   ├── apps.yml              # Production application applications
+│   │   ├── apps-dev.yml          # Development application applications
 │   │   ├── cluster-bootstrap.yml # Cluster bootstrap applications
 │   │   └── infrastructure.yml    # Infrastructure applications
 │   └── projects/                  # ArgoCD project definitions
 │       ├── apps.yml              # Apps project
 │       └── infrastructure.yml    # Infrastructure project
-├── apps/                         # Application configurations
+├── apps/                         # Production application configurations
 │   └── in-cluster/              # In-cluster applications
 │       └── default/             # Default namespace
 │           └── guestbook-ui/    # Guestbook UI application
+├── apps-dev/                     # Development application configurations
+│   └── in-cluster/              # In-cluster applications
+│       └── development/         # Development namespace
+│           └── webapp/          # Web application
 └── infrastructure/               # Infrastructure components
     ├── cluster-bootstrap/        # Cluster bootstrap components
     │   ├── gateway/             # Gateway components
@@ -118,7 +123,8 @@ The following applications are automatically deployed to new clusters:
 
 Applications are managed through ApplicationSets that automatically discover and deploy applications based on the directory structure:
 
-- **Apps ApplicationSet** (`argocd/appset/apps.yml`): Manages application deployments
+- **Apps ApplicationSet** (`argocd/appset/apps.yml`): Manages production application deployments
+- **Apps-Dev ApplicationSet** (`argocd/appset/apps-dev.yml`): Manages development application deployments with automatic image updates
 - **Infrastructure ApplicationSet** (`argocd/appset/infrastructure.yml`): Manages infrastructure components with StatefulSet sync optimization
 - **Cluster Bootstrap ApplicationSet** (`argocd/appset/cluster-bootstrap.yml`): Manages cluster-level components
 
@@ -160,6 +166,49 @@ A sample application demonstrating the GitOps workflow:
 - **Chart**: Uses `k8s-service` Helm chart from Gruntwork
 - **Configuration**: Customized through `values.yaml`
 - **Purpose**: Demonstrates application deployment patterns
+
+#### Development Applications (Apps-Dev)
+
+The `apps-dev` ApplicationSet manages development applications with automatic image updates:
+
+##### **Web Application**
+- **Location**: `apps-dev/in-cluster/development/webapp/`
+- **Chart**: Uses `k8s-service` Helm chart from Gruntwork
+- **Configuration**: Customized through `values.yaml`
+- **Features**: 
+  - Automatic image updates via ArgoCD Image Updater
+  - Development environment isolation
+  - Git-based configuration management
+
+##### **ApplicationSet Configuration**
+The `apps-dev` ApplicationSet (`argocd/appset/apps-dev.yml`) includes:
+
+```yaml
+# Image updater annotations for automatic updates
+argocd-image-updater.argoproj.io/image-list: app=ghcr.io/huytz/{{.path.basename}}
+argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-[0-9a-f]{7}$
+argocd-image-updater.argoproj.io/app.update-strategy: alphabetical
+argocd-image-updater.argoproj.io/app.platform: linux/amd64
+argocd-image-updater.argoproj.io/app.force-update: "true"
+
+# Helm parameters for image updates
+argocd-image-updater.argoproj.io/app.helm.image-name: containerImage.repository
+argocd-image-updater.argoproj.io/app.helm.image-tag: containerImage.tag
+
+# Git write-back configuration
+argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/git-creds
+argocd-image-updater.argoproj.io/git-branch: main
+argocd-image-updater.argoproj.io/git-repository: git@github.com:huytz/gitops.git
+argocd-image-updater.argoproj.io/write-back-target: "helmvalues:/{{.path.path}}/values.yaml"
+```
+
+**Features:**
+- ✅ **Automatic Image Updates**: Monitors container registries for new image tags
+- ✅ **Tag Filtering**: Only updates to `main-*` tags matching 7-character hex commit hashes
+- ✅ **Alphabetical Strategy**: Updates to the latest commit hash when sorted alphabetically
+- ✅ **Git Write-Back**: Automatically commits changes to the Git repository
+- ✅ **Platform Compatibility**: Configured for `linux/amd64` platform
+- ✅ **Development Isolation**: Separate namespace and configuration from production
 
 ## 🔧 Configuration
 
@@ -203,6 +252,59 @@ Infrastructure components use standard Helm charts with custom values:
   - Persistence settings
   - Security configurations
   - Resource limits
+
+### ArgoCD Image Updater Configuration
+
+The ArgoCD Image Updater automatically updates container images in applications based on configured policies:
+
+#### **Configuration Location**
+- **Values File**: `infrastructure/clusters/in-cluster/argocd/argocd-image-updater/values.yaml`
+- **ConfigMap**: `argocd-image-updater-config` in the `argocd` namespace
+
+#### **Key Configuration**
+
+```yaml
+# infrastructure/clusters/in-cluster/argocd/argocd-image-updater/values.yaml
+config:
+  applicationsAPIKind: "kubernetes"
+  argocd:
+    serverAddress: "argocd-server.argocd.svc.cluster.local:80"
+    insecure: true
+    plaintext: true
+    token: "<argocd-api-token>"
+  
+  # Git commit configuration
+  gitCommitUser: "huytz"
+  gitCommitTemplate: "feat: update {{.AppName}} to {{.Image}}:{{.Tag}} ({{.PrevTag}} -> {{.Tag}})"
+  
+  # Platform preferences for image selection
+  platforms: "linux/amd64"
+  
+  # Logging
+  logLevel: "debug"
+```
+
+#### **Features**
+- ✅ **Automatic Image Monitoring**: Polls container registries for new image tags
+- ✅ **Git Write-Back**: Commits changes directly to Git repositories
+- ✅ **Platform Compatibility**: Handles multi-platform image manifests
+- ✅ **Tag Filtering**: Supports regex patterns for tag selection
+- ✅ **Update Strategies**: Multiple strategies (alphabetical, newest-build, semver)
+- ✅ **Helm Integration**: Updates Helm chart values automatically
+- ✅ **Kustomize Support**: Updates Kustomize-based applications
+- ✅ **RBAC Integration**: Respects ArgoCD RBAC policies
+
+#### **Update Strategies**
+- **`alphabetical`**: Sorts tags alphabetically and picks the last one
+- **`newest-build`**: Uses image creation timestamps (requires metadata)
+- **`semver`**: Semantic versioning-based updates
+- **`digest`**: Updates to the most recent digest of a mutable tag
+
+#### **Platform Compatibility**
+The image updater is configured to handle platform mismatches:
+- **Issue**: Updater running on `darwin/arm64` trying to read `linux` image metadata
+- **Solution**: Platform annotation `linux/amd64` in application configurations
+- **Fallback**: `alphabetical` strategy when metadata reading fails
 
 ### Vault Configuration
 
@@ -300,4 +402,57 @@ webhook:
 - ✅ **Failure Tolerance**: Pods start even if Vault injection fails
 - ✅ **Timeout Protection**: 30-second timeout prevents hanging
 - ✅ **Namespace Agnostic**: Works across all namespaces
+
+## 🔧 Troubleshooting
+
+### ArgoCD Image Updater Issues
+
+#### **Platform Mismatch Errors**
+```
+Manifest list did not contain any usable reference. Platforms requested: (darwin/arm64), platforms included: (linux/amd64,linux/arm64)
+```
+
+**Solution**: Add platform annotation to application:
+```yaml
+argocd-image-updater.argoproj.io/app.platform: linux/amd64
+```
+
+#### **Template Errors**
+```
+can't evaluate field ImageName in type argocd.commitMessageTemplate
+```
+
+**Solution**: Use correct template variables:
+```yaml
+gitCommitTemplate: "feat: update {{.AppName}} to {{.Image}}:{{.Tag}} ({{.PrevTag}} -> {{.Tag}})"
+```
+
+#### **Image Not Found**
+```
+Image 'image-name' seems not to be live in this application, skipping
+```
+
+**Solution**: Verify image name in annotation matches actual image in values.yaml:
+- Annotation: `app=ghcr.io/huytz/webapp`
+- Values: `repository: ghcr.io/huytz/webapp`
+
+### Best Practices
+
+#### **Image Update Configuration**
+1. **Use Specific Tag Patterns**: `regexp:^main-[0-9a-f]{7}$` for commit-based tags
+2. **Choose Appropriate Strategy**: `alphabetical` for commit hashes, `newest-build` for timestamps
+3. **Enable Force Updates**: `force-update: "true"` for development environments
+4. **Configure Platform**: Specify platform when using `newest-build` strategy
+
+#### **Git Write-Back**
+1. **Use SSH Authentication**: Configure SSH keys for secure Git access
+2. **Set Commit User**: Configure `gitCommitUser` for proper attribution
+3. **Custom Commit Messages**: Use templates for consistent commit messages
+4. **Branch Protection**: Ensure target branch allows automated commits
+
+#### **Monitoring and Logging**
+1. **Enable Debug Logging**: `logLevel: "debug"` for troubleshooting
+2. **Monitor Update Cycles**: Check logs for successful updates
+3. **Track Metrics**: Enable metrics for monitoring update frequency
+4. **Health Checks**: Monitor image updater pod health
 
