@@ -26,16 +26,13 @@ spec:
     metadata:
       annotations:
         argocd-image-updater.argoproj.io/image-list: app=ghcr.io/huytz/{{.path.basename}}
-        # Use alphabetical instead of newest-build temporarily
-        argocd-image-updater.argoproj.io/app.update-strategy: alphabetical
         argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-[0-9a-f]{7}$
-        # argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-.*$
-        # argocd-image-updater.argoproj.io/app.update-strategy: newest-build
+        argocd-image-updater.argoproj.io/app.update-strategy: newest-build
+        argocd-image-updater.argoproj.io/app.platform: linux/amd64
         argocd-image-updater.argoproj.io/app.force-update: "true"
         # Helm parameters for image update
         argocd-image-updater.argoproj.io/app.helm.image-name: containerImage.repository
         argocd-image-updater.argoproj.io/app.helm.image-tag: containerImage.tag
-
         # Git write back method for image update
         argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/git-creds
         argocd-image-updater.argoproj.io/git-branch: main

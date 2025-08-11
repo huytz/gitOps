@@ -2,17 +2,14 @@ applicationName: webapp
 replicaCount: 1
 containerImage:
   repository: ghcr.io/huytz/webapp
-  tag: main-6874b48
+  tag: main-f9a18aa
   pullPolicy: IfNotPresent
-
 containerPort: 3000
 service:
   type: ClusterIP
   port: 3000
-
 ingress:
   enabled: false
-
 serviceAccount:
   create: true
   name: webapp
