@@ -48,9 +48,9 @@ spec:
     spec:
       project: apps-dev      
       sources:
-      - repoURL: https://helmcharts.gruntwork.io
+      - repoURL: https://huytz.github.io/helm-kubernetes-services/
         chart: 'k8s-service'
-        targetRevision: "0.2.29"
+        targetRevision: "0.0.2"
         helm:
           releaseName: '{{.path.basename}}'
           valueFiles:
