@@ -50,7 +50,7 @@ spec:
       sources:
       - repoURL: https://huytz.github.io/helm-kubernetes-services/
         chart: 'k8s-service'
-        targetRevision: "0.0.2"
+        targetRevision: "0.0.*"
         helm:
           releaseName: '{{.path.basename}}'
           valueFiles:
