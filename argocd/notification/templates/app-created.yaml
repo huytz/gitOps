@@ -1,6 +1,5 @@
-template.app-created: |
-  email:
-    subject: Application {{.app.metadata.name}} has been created.
-  message: Application {{.app.metadata.name}} has been created.
-  teams:
-    title: Application {{.app.metadata.name}} has been created.
+email:
+  subject: Application {{.app.metadata.name}} has been created.
+message: Application {{.app.metadata.name}} has been created.
+teams:
+  title: Application {{.app.metadata.name}} has been created.

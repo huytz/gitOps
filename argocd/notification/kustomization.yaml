@@ -27,6 +27,6 @@ configMapGenerator:
   - trigger.on-sync-status-unknown=triggers/on-sync-status-unknown.yaml
   - trigger.on-sync-succeeded=triggers/on-sync-succeeded.yaml
   # Default Triggers
-  - defaultTrigger=triggers/defaultTrigger.yaml
+  - defaultTriggers=triggers/defaultTriggers.yaml
   # Services
   - service.slack=services/slack.yaml

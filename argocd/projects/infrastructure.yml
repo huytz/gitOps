@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/part-of: argocd
     environment: production
   annotations:
-    notifications.argoproj.io/subscribe.defaultTrigger.slack: infra-deployment-logs
+    notifications.argoproj.io/subscribe.slack: infra-deployment-logs
 spec:
   description: Infrastructure project for managing cluster infrastructure components
   sourceRepos:

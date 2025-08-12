@@ -1,6 +1,5 @@
-trigger.on-sync-failed: |
-  - description: Application syncing has failed
-    oncePer: app.status.operationState?.syncResult?.revision
-    send:
-    - app-sync-failed
-    when: app.status.operationState != nil and app.status.operationState.phase in ['Error','Failed']
+- description: Application syncing has failed
+  oncePer: app.status.operationState?.syncResult?.revision
+  send:
+  - app-sync-failed
+  when: app.status.operationState != nil and app.status.operationState.phase in ['Error','Failed']

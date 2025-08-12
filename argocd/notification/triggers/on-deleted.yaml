@@ -1,6 +1,5 @@
-trigger.on-deleted: |
-  - description: Application is deleted.
-    oncePer: app.metadata.name
-    send:
-    - app-deleted
-    when: app.metadata.deletionTimestamp != nil
+- description: Application is deleted.
+  oncePer: app.metadata.name
+  send:
+  - app-deleted
+  when: app.metadata.deletionTimestamp != nil

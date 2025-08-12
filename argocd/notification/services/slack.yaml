@@ -1,3 +1,1 @@
-service.slack: |
-  # Slack service configuration
-  token: $slack-token
+token: $slack-token
