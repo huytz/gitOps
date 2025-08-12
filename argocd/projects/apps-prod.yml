@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/part-of: argocd
     environment: production
+  annotations:
+    notifications.argoproj.io/subscribe.defaultTrigger.slack: prod-deployment-logs
 spec:
   description: Production project for managing applications
   sourceRepos:

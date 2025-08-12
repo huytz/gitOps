@@ -1,0 +1,6 @@
+trigger.on-sync-running: |
+  - description: Application is being synced
+    oncePer: app.status.operationState?.syncResult?.revision
+    send:
+    - app-sync-running
+    when: app.status.operationState != nil and app.status.operationState.phase in ['Running']

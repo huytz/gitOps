@@ -1,0 +1,6 @@
+trigger.on-created: |
+  - description: Application is created.
+    oncePer: app.metadata.name
+    send:
+    - app-created
+    when: "true"

@@ -322,12 +322,12 @@ This example demonstrates the complete automated workflow from a commit to the [
 
 #### **1. Application Configuration**
 ```yaml
-# apps/development/default/webapp/values.yaml
+# apps/production/in-cluster/default/webapp/values.yaml
 applicationName: webapp
 replicaCount: 1
 containerImage:
   repository: ghcr.io/huytz/webapp
-  tag: main-7ceb248  # Current image tag
+  tag: main-e785142  # Current image tag
   pullPolicy: IfNotPresent
 containerPort: 3000
 service:
@@ -335,6 +335,9 @@ service:
   port: 3000
 ingress:
   enabled: false
+serviceAccount:
+  create: true
+  name: webapp
 ```
 
 #### **2. GitHub Actions Workflow (in webapp repo)**
@@ -387,7 +390,7 @@ jobs:
 # Before update
 containerImage:
   repository: ghcr.io/huytz/webapp
-  tag: main-7ceb248
+  tag: main-e785142
 
 # After new commit (abc1234) to webapp repo
 containerImage:
@@ -445,17 +448,14 @@ config:
 
 #### **Application-Level Configuration**
 ```yaml
-# Example from apps-dev ApplicationSet
+# Example from apps-prod ApplicationSet
 metadata:
   annotations:
-    # Image list and filtering
-    argocd-image-updater.argoproj.io/image-list: app=ghcr.io/huytz/{{.path.basename}}
-    argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-[0-9a-f]{7}$
-    argocd-image-updater.argoproj.io/app.update-strategy: newest-build
-    argocd-image-updater.argoproj.io/app.platform: linux/amd64
-    
-    # Force updates for development
-    argocd-image-updater.argoproj.io/app.force-update: "true"
+    # Image list and filtering (commented out for manual control)
+    # argocd-image-updater.argoproj.io/image-list: app=ghcr.io/huytz/{{.path.basename}}
+    # argocd-image-updater.argoproj.io/app.allow-tags: regexp:^main-[0-9a-f]{7}$
+    # argocd-image-updater.argoproj.io/app.update-strategy: newest-build
+    # argocd-image-updater.argoproj.io/app.platform: linux/amd64
     
     # Helm integration
     argocd-image-updater.argoproj.io/app.helm.image-name: containerImage.repository
