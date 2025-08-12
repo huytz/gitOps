@@ -21,7 +21,7 @@ slack:
       },
       {
         "title": "Revision",
-        "value": "{{.app.status.sync.revision}}",
+        "value": "{{- range $index, $revision := .app.status.sync.revisions }}{{ if $index }}\n{{ end }}{{ if eq $index 0 }}:package: {{ $revision }}{{ else }}:git: {{ trunc 8 $revision }}{{ end }}{{- end }}",
         "short": true
       }
       {{range $index, $c := .app.status.conditions}}
@@ -48,12 +48,12 @@ teams:
       "value": {{- if .app.spec.source }} ":arrow_heading_up: {{ .app.spec.source.repoURL }}" {{- else if .app.spec.sources }} "{{- range $index, $source := .app.spec.sources }}{{ if $index }}\n{{ end }}:arrow_heading_up: {{ $source.repoURL }}{{- end }}" {{- end }}
     },
     {
-      "name": "Revision",
-      "value": "{{.app.status.sync.revision}}"
+      "name": "Revisions",
+      "value": "{{- range $index, $revision := .app.status.sync.revisions }}{{ if $index }}\n{{ end }}{{ if eq $index 0 }}📦 {{ $revision }}{{ else }}🔗 {{ trunc 8 $revision }}{{ end }}{{- end }}"
     }
     {{range $index, $c := .app.status.conditions}}
       ,
-      {
+      {      
         "name": "{{$c.type}}",
         "value": "{{$c.message}}"
       }

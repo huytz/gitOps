@@ -1,5 +1,42 @@
 email:
   subject: Application {{.app.metadata.name}} has been created.
-message: Application {{.app.metadata.name}} has been created.
+message: |
+  {{if eq .serviceType "slack"}}:new:{{end}} Application {{.app.metadata.name}} has been created.
+  Application details: {{.context.argocdUrl}}/applications/{{.app.metadata.name}}.
 teams:
   title: Application {{.app.metadata.name}} has been created.
+slack:
+  attachments: |
+    [{
+      "title": "{{ .app.metadata.name}}",
+      "title_link": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
+      "color": "#36a64f",
+      "fields": [
+      {
+        "title": "Status",
+        "value": "Created",
+        "short": true
+      },
+      {
+        "title": {{- if .app.spec.source }} "Repository" {{- else if .app.spec.sources }} "Repositories" {{- end }},
+        "value": {{- if .app.spec.source }} ":arrow_heading_up: {{ .app.spec.source.repoURL }}" {{- else if .app.spec.sources }} "{{- range $index, $source := .app.spec.sources }}{{ if $index }}\n{{ end }}:arrow_heading_up: {{ $source.repoURL }}{{- end }}" {{- end }},
+        "short": true
+      },
+      {
+        "title": "Project",
+        "value": "{{.app.spec.project}}",
+        "short": true
+      }
+      {{range $index, $c := .app.status.conditions}}
+      ,
+      {
+        "title": "{{$c.type}}",
+        "value": "{{$c.message}}",
+        "short": true
+      }
+      {{end}}
+      ]
+    }]
+  deliveryPolicy: Post
+  groupingKey: ""
+  notifyBroadcast: false
