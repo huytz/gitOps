@@ -1,6 +1,10 @@
 controller:
   name: controller
   enableAnnotationValidations: true
+
+  config:
+    annotations-risk-level: Critical
+
   image:
     ## Keep false as default for now!
     chroot: false
@@ -81,14 +85,10 @@ controller:
   tcp:
     # -- Allows customization of the tcp-services-configmap; defaults to $(POD_NAMESPACE)
     configMapNamespace: ""
-    # -- Annotations to be added to the tcp config configmap
-    annotations: {}
+  
   udp:
     # -- Allows customization of the udp-services-configmap; defaults to $(POD_NAMESPACE)
     configMapNamespace: ""
-    # -- Annotations to be added to the udp config configmap
-    annotations: {}
-  # -- Maxmind license key to download GeoLite2 Databases.
   ## https://blog.maxmind.com/2019/12/significant-changes-to-accessing-and-using-geolite2-databases/
   maxmindLicenseKey: ""
   # -- Additional command line arguments to pass to Ingress-Nginx Controller
@@ -205,37 +205,14 @@ controller:
  
   admissionWebhooks:
     name: admission
-    annotations: {}
-    # ignore-check.kube-linter.io/no-read-only-rootfs: "This deployment needs write access to root filesystem".
-
-    ## Additional annotations to the admission webhooks.
-    ## These annotations will be added to the ValidatingWebhookConfiguration and
-    ## the Jobs Spec of the admission webhooks.
+    
     enabled: true
-    # -- Additional environment variables to set
-    extraEnvs: []
-    # extraEnvs:
-    #   - name: FOO
-    #     valueFrom:
-    #       secretKeyRef:
-    #         key: FOO
-    #         name: secret-resource
-    # -- Admission Webhook failure policy to use
     failurePolicy: Fail
     # timeoutSeconds: 10
     port: 8443
     certificate: "/usr/local/certificates/cert"
     key: "/usr/local/certificates/key"
-    namespaceSelector: {}
-    objectSelector: {}
-    # -- Labels to be added to admission webhooks
-    labels: {}
     service:
-      annotations: {}
-      # clusterIP: ""
-      externalIPs: []
-      # loadBalancerIP: ""
-      loadBalancerSourceRanges: []
       servicePort: 443
       type: ClusterIP
     createSecretJob:
@@ -254,13 +231,6 @@ controller:
           drop:
             - ALL
         readOnlyRootFilesystem: true
-      resources: {}
-      # limits:
-      #   cpu: 10m
-      #   memory: 20Mi
-      # requests:
-      #   cpu: 10m
-      #   memory: 20Mi
     patchWebhookJob:
       name: patch
       # -- Deadline in seconds for the job to complete. Must be greater than 0 to enforce. If unset or 0, no deadline is enforced.
@@ -289,24 +259,11 @@ controller:
         tag: v1.6.2
         digest: sha256:050a34002d5bb4966849c880c56c91f5320372564245733b33d4b3461b4dbd24
         pullPolicy: IfNotPresent
-      # -- Provide a priority class name to the webhook patching job
-      ##
-      priorityClassName: ""
-      # -- Instruct the kubelet to use the named RuntimeClass to run the pod
-      runtimeClassName: ""
-      podAnnotations: {}
-      # NetworkPolicy for webhook patch
       networkPolicy:
         # -- Enable 'networkPolicy' or not
         enabled: false
       nodeSelector:
         kubernetes.io/os: linux
-      tolerations: []
-      # -- Labels to be added to patch job resources
-      labels: {}
-      # -- Security context for secret creation & webhook patch pods
-      securityContext: {}
-      # -- Admission webhook patch job RBAC
       rbac:
         # -- Create RBAC or not
         create: true
