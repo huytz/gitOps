@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: manifest
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    # matrix 'parent' generator
+    - matrix:
+        generators:
+          # git generator, 'child' #1
+          - git:
+              directories:
+                - path: infrastructure/clusters/*/manifest/*
+              repoURL: https://github.com/huytz/gitops.git
+              revision: HEAD
+          # cluster generator, 'child' #2
+          - clusters:
+              selector:
+                matchLabels:
+                  argocd.argoproj.io/secret-type: cluster
+                  kubernetes.io/environment: production
+  template:
+    metadata:
+      name: "{{.name}}-{{index .path.segments 3}}-{{index .path.segments 4}}"
+      labels:
+        appset: manifest
+        environment: "production"
+        cluster: "{{.name}}"
+    spec:
+      project: infrastructure
+      source:
+        repoURL: https://github.com/huytz/gitops.git
+        targetRevision: HEAD
+        path: "{{.path.path}}"
+        directory:
+          recurse: false
+          include: "*.yaml"
+      destination:
+        server: "{{.server}}"
+        namespace: "{{index .path.segments 4}}"
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+        automated:
+          prune: true
+          selfHeal: true

@@ -4,10 +4,16 @@ containerImage:
   repository: ghcr.io/huytz/webapp
   tag: main-44a3767
   pullPolicy: IfNotPresent
-containerPort: 3000
+containerPorts:
+  http:
+    port: 3000
+    protocol: TCP
 service:
-  type: ClusterIP
-  port: 3000
+  ports:
+    app:
+      port: 80
+      targetPort: http
+      protocol: TCP
 ingress:
   enabled: false
 serviceAccount:

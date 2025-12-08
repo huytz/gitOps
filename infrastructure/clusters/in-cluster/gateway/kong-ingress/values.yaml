@@ -1,0 +1,288 @@
+# -----------------------------------------------------------------------------
+# Kong Ingress Controller Configuration
+# -----------------------------------------------------------------------------
+# Kong Ingress Controller's primary purpose is to satisfy Ingress resources
+# created in k8s. It uses CRDs for more fine grained control over routing and
+# for Kong specific configuration.
+#
+# Gateway API Support:
+# - Gateway API resources will only be reconciled when Gateway API CRDs are
+#   installed in your cluster BEFORE Kong Ingress Controller is started
+# - Ensure gateway.proxy.stream listeners match Gateway API listener ports in your
+#   Gateway resources
+# - For unmanaged Gateways, set annotation 'konghq.com/gatewayclass-unmanaged=true'
+#   on your GatewayClass resource
+# - Gateway API RBAC permissions are enabled via controller.ingressController.rbac.gatewayAPI.enabled
+
+controller:
+  enabled: true
+  
+  # Proxy service name override
+  proxy:
+    nameOverride: "{{ .Release.Name }}-gateway-proxy"
+  
+  # Service account configuration
+  serviceAccount:
+    create: true
+    automountServiceAccountToken: false
+  
+  # Controller environment variables
+  env:
+    database: "off"
+    role: traditional
+  
+  # Kong Ingress Controller configuration
+  ingressController:
+    enabled: true
+    ingressClass: kong
+    createIngressClass: true
+    ingressClassAnnotations: {}
+    
+    # Controller image configuration
+    image:
+      repository: kong/kubernetes-ingress-controller
+      tag: "3.5"
+      effectiveSemver:
+    
+    # Controller arguments
+    args: []
+    # Gateway API controller name configuration
+    # If not specified, defaults to 'konghq.com/kic-gateway-controller'
+    # gatewayAPIControllerName: "konghq.com/kic-gateway-controller"
+    
+    # Gateway Discovery - Enabled for kong/ingress chart
+    gatewayDiscovery:
+      enabled: true
+      generateAdminApiService: true
+      adminApiService:
+        namespace: ""
+        name: ""
+    
+    # Controller environment variables
+    env:
+      kong_admin_tls_skip_verify: true
+      # Gateway API controller name (alternative to gatewayAPIControllerName)
+      CONTROLLER_GATEWAY_API_CONTROLLER_NAME: "konghq.com/kic-gateway-controller"
+    envFrom: []
+    
+    # Admission webhook configuration
+    admissionWebhook:
+      matchPolicy: Equivalent
+      enabled: true
+      filterSecrets: false
+      failurePolicy: Ignore
+      port: 8080
+    
+    # RBAC configuration
+    rbac:
+      create: true
+      enableClusterRoles: true
+      gatewayAPI:
+        enabled: true
+    
+    # Health probes
+    livenessProbe:
+      httpGet:
+        path: "/healthz"
+        port: 10254
+        scheme: HTTP
+      initialDelaySeconds: 5
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    
+    readinessProbe:
+      httpGet:
+        path: "/readyz"
+        port: 10254
+        scheme: HTTP
+      initialDelaySeconds: 5
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    
+    # Controller resources
+    resources:
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+    
+    # Konnect configuration
+    konnect:
+      enabled: false
+  
+  # Controller deployment configuration
+  deployment:
+    kong:
+      enabled: false  # Gateway is managed separately in kong/ingress chart
+    revisionHistoryLimit: 10
+
+# -----------------------------------------------------------------------------
+# Kong Gateway Configuration
+# -----------------------------------------------------------------------------
+gateway:
+  enabled: true
+  
+  # Kong Gateway image configuration
+  image:
+    repository: kong/kong-gateway
+    tag: "3.9"
+    effectiveSemver:
+    pullPolicy: IfNotPresent
+  
+  # Kong Gateway environment variables
+  env:
+    database: "off"
+    router_flavor: "traditional"
+    nginx_worker_processes: "2"
+    proxy_access_log: /dev/stdout
+    admin_access_log: /dev/stdout
+    admin_gui_access_log: /dev/stdout
+    portal_api_access_log: /dev/stdout
+    proxy_error_log: /dev/stderr
+    admin_error_log: /dev/stderr
+    admin_gui_error_log: /dev/stderr
+    portal_api_error_log: /dev/stderr
+    prefix: /kong_prefix/
+  
+  # Admin API configuration
+  admin:
+    enabled: true
+    type: NodePort
+    http:
+      enabled: true
+      servicePort: 8001
+      containerPort: 8001
+    
+    tls:
+      enabled: true
+      servicePort: 8444
+      containerPort: 8444
+      parameters:
+        - http2
+      client:
+        caBundle: ""
+        secretName: ""
+  
+  # Status API configuration
+  status:
+    enabled: true
+    http:
+      enabled: true
+      containerPort: 8100
+      parameters: []
+    
+    tls:
+      enabled: true
+      containerPort: 8543
+      parameters: []
+  
+  # Proxy configuration
+  proxy:
+    enabled: true
+    type: LoadBalancer
+    loadBalancerClass: ""
+    loadBalancerSourceRanges: []
+    nameOverride: ""
+    annotations: {}
+    labels:
+      enable-metrics: "true"
+    
+    http:
+      enabled: true
+      servicePort: 80
+      containerPort: 8000
+      parameters: []
+    
+    tls:
+      enabled: true
+      servicePort: 443
+      containerPort: 8443
+      parameters:
+        - http2
+    
+    appProtocol: ""
+    
+    # Stream listeners for Gateway API support (TCP, UDP, TLS)
+    # These correspond to Gateway API listener ports
+    stream:
+      # TCP stream listener example
+      # - containerPort: 9901
+      #   servicePort: 9901
+      #   protocol: TCP
+      # UDP stream listener example
+      # - containerPort: 9902
+      #   servicePort: 9902
+      #   protocol: UDP
+      # TLS stream listener example
+      # - containerPort: 9903
+      #   servicePort: 9903
+      #   protocol: TCP
+      #   parameters:
+      #     - "ssl"
+    
+    ingress:
+      enabled: false
+  
+  # UDP Proxy configuration
+  udpProxy:
+    enabled: false
+  
+  # Cluster configuration
+  cluster:
+    enabled: false
+  
+  # Plugins configuration
+  plugins: {}
+  
+  # Secret volumes
+  secretVolumes: []
+  
+  # DB-less configuration
+  dblessConfig:
+    # Either Kong's configuration is managed from an existing ConfigMap (with Key: kong.yml)
+    configMap: ""
+    # Or Kong's configuration is managed from an existing Secret (with Key: kong.yml)
+    secret: ""
+    # Or the configuration is passed in full-text below
+    config: |
+    # # _format_version: "1.1"
+    # # services:
+    # #   # Example configuration
+    # #   # - name: example.com
+    # #   #   url: http://example.com
+    # #   #   routes:
+    # #   #   - name: example
+    # #   #     paths:
+    # #   #     - "/example"
+  
+  # Gateway health probes
+  readinessProbe:
+    httpGet:
+      path: "/status/ready"
+      port: status
+      scheme: HTTP
+    initialDelaySeconds: 5
+    timeoutSeconds: 5
+    periodSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3
+  
+  livenessProbe:
+    httpGet:
+      path: "/status"
+      port: status
+      scheme: HTTP
+    initialDelaySeconds: 5
+    timeoutSeconds: 5
+    periodSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3
+  
+  # Gateway replica count
+  replicaCount: 2

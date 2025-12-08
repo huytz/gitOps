@@ -1,0 +1,50 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: kong
+  annotations:
+    konghq.com/gatewayclass-unmanaged: "true"
+spec:
+  controllerName: konghq.com/kic-gateway-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: kong-gateway
+  namespace: default
+spec:
+  gatewayClassName: kong
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: webapp-http-route
+  namespace: default
+  annotations:
+    konghq.com/strip-path: "true"
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: kong-gateway
+      namespace: default
+  hostnames:
+    - "api-gw.example.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /v1/webapp
+      backendRefs:
+        - group: ''
+          kind: Service
+          name: webapp
+          port: 80
+          weight: 1

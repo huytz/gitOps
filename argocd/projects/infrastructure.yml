@@ -48,9 +48,34 @@ spec:
     # Kong cluster resources
     - group: 'konghq.com'
       kind: KongClusterPlugin
+    # Gateway API cluster resources
+    - group: 'gateway.networking.k8s.io'
+      kind: GatewayClass
 
   # Namespace-scoped resources for infrastructure components
   namespaceResourceWhitelist:
+    - group: 'core'
+      kind: Pod
+    - group: 'apps'
+      kind: ReplicaSet
+    - group: 'apps'
+      kind: Deployment
+    - group: 'apps'
+      kind: StatefulSet
+    - group: 'apps'
+      kind: DaemonSet
+    - group: 'batch'
+      kind: Job
+    - group: 'batch'
+      kind: CronJob
+    - group: 'networking.k8s.io'
+      kind: Ingress
+    - group: 'networking.k8s.io'
+      kind: NetworkPolicy
+    - group: 'autoscaling'
+      kind: HorizontalPodAutoscaler
+    - group: 'policy'
+      kind: PodDisruptionBudget
     - group: ''
       kind: ConfigMap
     - group: ''
@@ -113,3 +138,13 @@ spec:
       kind: KongConsumer
     - group: 'konghq.com'
       kind: KongConsumerGroup
+    - group: 'gateway.networking.k8s.io'
+      kind: Gateway
+    - group: 'gateway.networking.k8s.io'
+      kind: HTTPRoute
+    - group: 'gateway.networking.k8s.io'
+      kind: TCPRoute
+    - group: 'gateway.networking.k8s.io'
+      kind: TLSRoute
+    - group: 'gateway.networking.k8s.io'
+      kind: UDPRoute
