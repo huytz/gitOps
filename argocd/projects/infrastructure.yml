@@ -90,24 +90,6 @@ spec:
       kind: Role
     - group: 'rbac.authorization.k8s.io'
       kind: RoleBinding
-    - group: 'apps'
-      kind: Deployment
-    - group: 'apps'
-      kind: StatefulSet
-    - group: 'apps'
-      kind: DaemonSet
-    - group: 'batch'
-      kind: Job
-    - group: 'batch'
-      kind: CronJob
-    - group: 'networking.k8s.io'
-      kind: Ingress
-    - group: 'networking.k8s.io'
-      kind: NetworkPolicy
-    - group: 'autoscaling'
-      kind: HorizontalPodAutoscaler
-    - group: 'policy'
-      kind: PodDisruptionBudget
     # Prometheus monitoring resources
     - group: 'monitoring.coreos.com'
       kind: ServiceMonitor
@@ -125,8 +107,6 @@ spec:
       kind: PrometheusAgent
     - group: 'monitoring.coreos.com'
       kind: PrometheusRule
-    - group: 'monitoring.coreos.com'
-      kind: ServiceMonitor
     # Kong namespace resources
     - group: 'konghq.com'
       kind: KongPlugin
