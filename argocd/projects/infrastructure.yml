@@ -54,7 +54,7 @@ spec:
 
   # Namespace-scoped resources for infrastructure components
   namespaceResourceWhitelist:
-    - group: 'core'
+    - group: ''
       kind: Pod
     - group: 'apps'
       kind: ReplicaSet
