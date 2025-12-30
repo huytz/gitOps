@@ -20,3 +20,12 @@ repoServer:
 
 applicationSet:
   replicas: 2
+
+## Enable exec
+configs:
+  cm:
+    exec.enabled: "true"
+    # Local user accounts configuration
+    # Format: accounts.<username>: <capabilities>
+    # Capabilities: login, apiKey (comma-separated)
+    accounts.developer: "login"

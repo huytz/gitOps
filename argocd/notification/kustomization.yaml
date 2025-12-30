@@ -5,28 +5,28 @@ generatorOptions:
 namespace: argocd
 
 configMapGenerator:
-- name: argocd-notifications-cm
-  namespace: argocd
-  files:
-  # Templates
-  - template.app-created=templates/app-created.yaml
-  - template.app-deleted=templates/app-deleted.yaml
-  - template.app-deployed=templates/app-deployed.yaml
-  - template.app-health-degraded=templates/app-health-degraded.yaml
-  - template.app-sync-failed=templates/app-sync-failed.yaml
-  - template.app-sync-running=templates/app-sync-running.yaml
-  - template.app-sync-status-unknown=templates/app-sync-status-unknown.yaml
-  - template.app-sync-succeeded=templates/app-sync-succeeded.yaml
-  # Triggers
-  - trigger.on-created=triggers/on-created.yaml
-  - trigger.on-deleted=triggers/on-deleted.yaml
-  - trigger.on-deployed=triggers/on-deployed.yaml
-  - trigger.on-health-degraded=triggers/on-health-degraded.yaml
-  - trigger.on-sync-failed=triggers/on-sync-failed.yaml
-  - trigger.on-sync-running=triggers/on-sync-running.yaml
-  - trigger.on-sync-status-unknown=triggers/on-sync-status-unknown.yaml
-  - trigger.on-sync-succeeded=triggers/on-sync-succeeded.yaml
-  # Default Triggers
-  - defaultTriggers=triggers/defaultTriggers.yaml
-  # Services
-  - service.slack=services/slack.yaml
+  - name: argocd-notifications-cm
+    namespace: argocd
+    files:
+      # Templates
+      - template.app-created=templates/app-created.yaml
+      - template.app-deleted=templates/app-deleted.yaml
+      - template.app-deployed=templates/app-deployed.yaml
+      - template.app-health-degraded=templates/app-health-degraded.yaml
+      - template.app-sync-failed=templates/app-sync-failed.yaml
+      - template.app-sync-running=templates/app-sync-running.yaml
+      - template.app-sync-status-unknown=templates/app-sync-status-unknown.yaml
+      - template.app-sync-succeeded=templates/app-sync-succeeded.yaml
+      # Triggers
+      - trigger.on-created=triggers/on-created.yaml
+      - trigger.on-deleted=triggers/on-deleted.yaml
+      - trigger.on-deployed=triggers/on-deployed.yaml
+      - trigger.on-health-degraded=triggers/on-health-degraded.yaml
+      - trigger.on-sync-failed=triggers/on-sync-failed.yaml
+      - trigger.on-sync-running=triggers/on-sync-running.yaml
+      - trigger.on-sync-status-unknown=triggers/on-sync-status-unknown.yaml
+      - trigger.on-sync-succeeded=triggers/on-sync-succeeded.yaml
+      # Default Triggers
+      - defaultTriggers=triggers/defaultTriggers.yaml
+      # Services
+      - service.slack=services/slack.yaml

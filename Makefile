@@ -78,4 +78,7 @@ local: pre_check argocd-install init
 	@echo "   2. Get admin password: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=\"{.data.password}\" | base64 -d"
 	@echo "   3. Login to ArgoCD UI at https://localhost:8080 (username: admin)"
 	@echo ""
+	@echo "📖 For complete post-setup steps, see:"
+	@echo "   https://github.com/huytz/gitOps?tab=readme-ov-file#post-setup-steps"
+	@echo ""
 	@echo "🚀 Your GitOps environment is ready!"

@@ -8,9 +8,9 @@ metadata:
   namespace: argocd
 spec:
   rules:
-  - resource: "applications"
-    verbs: ["get", "create", "update"]
-    objects: ["*/*"]
+    - resource: "applications"
+      verbs: ["get", "create", "update"]
+      objects: ["*/*"]
 ---
 apiVersion: rbac-operator.argoproj-labs.io/v1alpha1
 kind: ArgoCDRoleBinding
@@ -22,7 +22,7 @@ metadata:
   namespace: argocd
 spec:
   subjects:
-  - kind: "local"
-    name: "image-updater"
+    - kind: "local"
+      name: "image-updater"
   argocdRoleRef:
     name: "image-updater"

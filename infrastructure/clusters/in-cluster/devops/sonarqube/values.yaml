@@ -1,152 +1,165 @@
-deploymentType: "StatefulSet"
-replicaCount: 1
-revisionHistoryLimit: 10
-deploymentStrategy:
-  type: Recreate
+sonarqube:
+  monitoringPasscode: changeme
+  deploymentType: "StatefulSet"
+  replicaCount: 1
+  revisionHistoryLimit: 10
+  deploymentStrategy:
+    type: Recreate
+  image:
+    repository: sonarqube
+    pullPolicy: IfNotPresent
 
-image:
-  repository: sonarqube
-  pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    externalPort: 9000
+    internalPort: 9000
+    labels: {}
+    annotations: {}
 
-service:
-  type: ClusterIP
-  externalPort: 9000
-  internalPort: 9000
-  labels:
-  annotations: {}
+  httproute:
+    enabled: false
+    gateway: kong-gateway
+    gatewayNamespace: default # optional
+    labels:
+      somelabel: somevalue
+    hostnames:
+      - sonarqube.localhost
 
-httproute:
-  enabled: true
-  gateway: kong-gateway
-  gatewayNamespace: default # optional
-  labels:
-    somelabel: somevalue
-  hostnames:
-    - sonarqube.localhost
+  readinessProbe:
+    exec:
+      command:
+        - sh
+        - -c
+        - |
+          #!/bin/bash
+          # A Sonarqube container is considered ready if the status is UP, DB_MIGRATION_NEEDED or DB_MIGRATION_RUNNING
+          # status about migration are added to prevent the node to be kill while SonarQube is upgrading the database.
+          if wget --no-proxy -qO- http://localhost:{{ .Values.service.internalPort }}{{ .Values.readinessProbe.sonarWebContext | default (include "sonarqube.webcontext" .) }}api/system/status | grep -q -e '"status":"UP"' -e '"status":"DB_MIGRATION_NEEDED"' -e '"status":"DB_MIGRATION_RUNNING"'; then
+            exit 0
+          fi
+          exit 1
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    failureThreshold: 6
+    # Note that timeoutSeconds was not respected before Kubernetes 1.20 for exec probes
+    timeoutSeconds: 1
+    # If an ingress *path* other than the root (/) is defined, it should be reflected here
+    # A trailing "/" must be included
+    # deprecated please use sonarWebContext at the value top level
+    # sonarWebContext: /
 
-readinessProbe:
-  exec:
-    command:
-      - sh
-      - -c
-      - |
-        #!/bin/bash
-        # A Sonarqube container is considered ready if the status is UP, DB_MIGRATION_NEEDED or DB_MIGRATION_RUNNING
-        # status about migration are added to prevent the node to be kill while SonarQube is upgrading the database.
-        if wget --no-proxy -qO- http://localhost:{{ .Values.service.internalPort }}{{ .Values.readinessProbe.sonarWebContext | default (include "sonarqube.webcontext" .) }}api/system/status | grep -q -e '"status":"UP"' -e '"status":"DB_MIGRATION_NEEDED"' -e '"status":"DB_MIGRATION_RUNNING"'; then
-          exit 0
-        fi
-        exit 1
-  initialDelaySeconds: 60
-  periodSeconds: 30
-  failureThreshold: 6
-  # Note that timeoutSeconds was not respected before Kubernetes 1.20 for exec probes
-  timeoutSeconds: 1
-  # If an ingress *path* other than the root (/) is defined, it should be reflected here
-  # A trailing "/" must be included
-  # deprecated please use sonarWebContext at the value top level
-  # sonarWebContext: /
+  livenessProbe:
+    exec:
+      command:
+        - sh
+        - -c
+        - |
+          wget --no-proxy --quiet -O /dev/null --timeout={{ .Values.livenessProbe.timeoutSeconds }} --header="X-Sonar-Passcode: $SONAR_WEB_SYSTEMPASSCODE" "http://localhost:{{ .Values.service.internalPort }}{{ .Values.livenessProbe.sonarWebContext | default (include "sonarqube.webcontext" .) }}api/system/liveness"
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    failureThreshold: 6
+    # Note that timeoutSeconds was not respected before Kubernetes 1.20 for exec probes
+    timeoutSeconds: 1
+    # If an ingress *path* other than the root (/) is defined, it should be reflected here
+    # A trailing "/" must be included
+    # deprecated please use sonarWebContext at the value top level
+    # sonarWebContext: /
 
-livenessProbe:
-  exec:
-    command:
-      - sh
-      - -c
-      - |
-        wget --no-proxy --quiet -O /dev/null --timeout={{ .Values.livenessProbe.timeoutSeconds }} --header="X-Sonar-Passcode: $SONAR_WEB_SYSTEMPASSCODE" "http://localhost:{{ .Values.service.internalPort }}{{ .Values.livenessProbe.sonarWebContext | default (include "sonarqube.webcontext" .) }}api/system/liveness"
-  initialDelaySeconds: 60
-  periodSeconds: 30
-  failureThreshold: 6
-  # Note that timeoutSeconds was not respected before Kubernetes 1.20 for exec probes
-  timeoutSeconds: 1
-  # If an ingress *path* other than the root (/) is defined, it should be reflected here
-  # A trailing "/" must be included
-  # deprecated please use sonarWebContext at the value top level
-  # sonarWebContext: /
+  startupProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 24
+    # Note that timeoutSeconds was not respected before Kubernetes 1.20 for exec probes
+    timeoutSeconds: 1
+    # If an ingress *path* other than the root (/) is defined, it should be reflected here
+    # A trailing "/" must be included
+    # deprecated please use sonarWebContext at the value top level
+    # sonarWebContext: /
 
-startupProbe:
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  failureThreshold: 24
-  # Note that timeoutSeconds was not respected before Kubernetes 1.20 for exec probes
-  timeoutSeconds: 1
-  # If an ingress *path* other than the root (/) is defined, it should be reflected here
-  # A trailing "/" must be included
-  # deprecated please use sonarWebContext at the value top level
-  # sonarWebContext: /
+  initContainers:
+    # all initContainers use SonarQube image by default, but you can override it by setting the image field (ex image: ubuntu:24.04)
+    # image:
+    # Set the security context for the init containers
+    # The current section contains the default values set in a generic Kubernetes cluster. If you are using OpenShift, you should not set any specific UID or GID to be used for the execution.
+    # We allow the init containers to have a separate security context declaration because
+    # the initContainer may not require the same as SonarQube.
+    # Those default are used to match pod security standard restricted as least privileged approach
+    securityContext:
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 0
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop: ["ALL"]
+      readOnlyRootFilesystem: true
+    # We allow the init containers to have a separate resources declaration because
+    # the initContainer does not take as much resources.
+    resources: {}
 
-initContainers:
-  # all initContainers use SonarQube image by default, but you can override it by setting the image field (ex image: ubuntu:24.04)
-  # image:
-  # Set the security context for the init containers
-  # The current section contains the default values set in a generic Kubernetes cluster. If you are using OpenShift, you should not set any specific UID or GID to be used for the execution.
-  # We allow the init containers to have a separate security context declaration because
-  # the initContainer may not require the same as SonarQube.
-  # Those default are used to match pod security standard restricted as least privileged approach
-  securityContext:
-    allowPrivilegeEscalation: false
-    runAsNonRoot: true
-    runAsUser: 1000
-    runAsGroup: 0
-    seccompProfile:
-      type: RuntimeDefault
-    capabilities:
-      drop: ["ALL"]
-    readOnlyRootFilesystem: true
-  # We allow the init containers to have a separate resources declaration because
-  # the initContainer does not take as much resources.
-  resources: {}
+  caCerts:
+    enabled: false
 
-caCerts:
-  enabled: false
+  initSysctl:
+    enabled: true
+    vmMaxMapCount: 524288
+    fsFileMax: 131072
+    nofile: 131072
+    nproc: 8192
+    # all initContainers use SonarQube image by default, but you can override it by setting the image field (ex image: ubuntu:24.04)
+    # image:
+    securityContext:
+      # Compatible with podSecurity standard privileged
+      privileged: true
+      # if run without root permissions, error "sysctl: permission denied on key xxx, ignoring"
+      runAsUser: 0
+      readOnlyRootFilesystem: true
+    # resources: {}
 
-initSysctl:
-  enabled: true
-  vmMaxMapCount: 524288
-  fsFileMax: 131072
-  nofile: 131072
-  nproc: 8192
-  # all initContainers use SonarQube image by default, but you can override it by setting the image field (ex image: ubuntu:24.04)
-  # image:
-  securityContext:
-    # Compatible with podSecurity standard privileged
-    privileged: true
-    # if run without root permissions, error "sysctl: permission denied on key xxx, ignoring"
-    runAsUser: 0
-    readOnlyRootFilesystem: true
-  # resources: {}
+  # This should not be required anymore, used to chown/chmod folder created by faulty CSI driver that are not applying properly POSIX fsgroup.
+  initFs:
+    enabled: true
+    # all initContainers use SonarQube image by default, but you can override it by setting the image field (ex image: ubuntu:24.04)
+    # image:
+    # Compatible with podSecurity standard baseline.
+    securityContext:
+      privileged: false
+      runAsNonRoot: false
+      runAsUser: 0
+      runAsGroup: 0
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop: ["ALL"]
+        add: ["CHOWN"]
+      readOnlyRootFilesystem: true
+  # Alternative: Use a secret reference instead of direct value
+  # monitoringPasscodeSecretName: "sonarqube-monitoring-secret"
+  # monitoringPasscodeSecretKey: "passcode"
 
-# This should not be required anymore, used to chown/chmod folder created by faulty CSI driver that are not applying properly POSIX fsgroup.
-initFs:
-  enabled: true
-  # all initContainers use SonarQube image by default, but you can override it by setting the image field (ex image: ubuntu:24.04)
-  # image:
-  # Compatible with podSecurity standard baseline.
-  securityContext:
-    privileged: false
-    runAsNonRoot: false
-    runAsUser: 0
-    runAsGroup: 0
-    seccompProfile:
-      type: RuntimeDefault
-    capabilities:
-      drop: ["ALL"]
-      add: ["CHOWN"]
-    readOnlyRootFilesystem: true
+  edition: developer
 
-prometheusExporter:
-  enabled: false
-  # jmx_prometheus_javaagent version to download from Maven Central
-  version: "0.17.2"
-  # Alternative full download URL for the jmx_prometheus_javaagent.jar (overrides prometheusExporter.version)
-  # downloadURL: ""
-  # if you need to ignore TLS certificates for whatever reason enable the following flag
-  noCheckCertificate: false
+  prometheusMonitoring:
+    # Generate a Prometheus Pod Monitor (https://github.com/coreos/prometheus-operator)
+    #
+    podMonitor:
+      # Create PodMonitor Resource for Prometheus scraping
+      enabled: false
 
-  # Ports for the jmx prometheus agent to export metrics at
-  webBeanPort: 8000
-  ceBeanPort: 8001
+  prometheusExporter:
+    enabled: false
+    # jmx_prometheus_javaagent version to download from Maven Central
+    version: "0.17.2"
+    # Alternative full download URL for the jmx_prometheus_javaagent.jar (overrides prometheusExporter.version)
+    # downloadURL: ""
+    # if you need to ignore TLS certificates for whatever reason enable the following flag
+    noCheckCertificate: false
 
-  config:
-    rules:
-      - pattern: ".*"
+    # Ports for the jmx prometheus agent to export metrics at
+    webBeanPort: 8000
+    ceBeanPort: 8001
+
+    config:
+      rules:
+        - pattern: ".*"

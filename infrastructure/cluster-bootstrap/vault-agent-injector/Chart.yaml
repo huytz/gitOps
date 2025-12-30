@@ -1,0 +1,8 @@
+apiVersion: v2
+name: vault
+version: 0.1.0
+description: A Helm chart for deploying Vault Agent Injector
+dependencies:
+  - name: vault
+    version: "0.30.1"
+    repository: https://helm.releases.hashicorp.com

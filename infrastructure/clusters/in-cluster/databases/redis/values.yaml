@@ -1,17 +1,18 @@
-architecture: standalone
+redis:
+  architecture: standalone
 
-auth:
-  enabled: false
-  sentinel: false
-
-commonConfiguration: |-
-  appendonly no
-  save ""
-
-master:
-  count: 1
-  persistence:
+  auth:
     enabled: false
+    sentinel: false
 
-replica:
-  replicaCount: 0
+  commonConfiguration: |-
+    appendonly no
+    save ""
+
+  master:
+    count: 1
+    persistence:
+      enabled: false
+
+  replica:
+    replicaCount: 0

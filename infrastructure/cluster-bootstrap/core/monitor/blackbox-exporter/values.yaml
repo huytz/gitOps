@@ -1,62 +1,64 @@
-restartPolicy: Always
-
-kind: Deployment
-
-hostNetwork: false
-
-strategy:
-  rollingUpdate:
-    maxSurge: 1
-    maxUnavailable: 0
-  type: RollingUpdate
-
-image:
-  registry: quay.io
-  repository: prometheus/blackbox-exporter
-  # Overrides the image tag whose default is {{ printf "v%s" .Chart.AppVersion }}
-  tag: ""
-  pullPolicy: IfNotPresent
-  digest: ""
-
-livenessProbe:
-  httpGet:
-    path: /-/healthy
-    port: http
-  failureThreshold: 3
-
-readinessProbe:
-  httpGet:
-    path: /-/healthy
-    port: http
-
-config:
-  modules:
-    http_2xx:
-      prober: http
-      timeout: 5s
-      http:
-        valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
-        follow_redirects: true
-        preferred_ip_protocol: "ip4"
-
-service:
-  annotations: {}
-  labels: {}
-  type: ClusterIP
-  port: 9115
-  ipDualStack:
-    enabled: false
-    ipFamilies: ["IPv6", "IPv4"]
-    ipFamilyPolicy: "PreferDualStack"
-
-# Only changes container port. Application port can be changed with extraArgs (--web.listen-address=:9115)
-# https://github.com/prometheus/blackbox_exporter/blob/998037b5b40c1de5fee348ffdea8820509d85171/main.go#L55
-containerPort: 9115
-
-# Number of port to expose on the host. If specified, this must be a valid port number, 0 < x < 65536. If zero, no port is exposed.
-# This is useful for communicating with Daemon Pods when kind is DaemonSet.
-hostPort: 0
-
-serviceAccount:
-  # Specifies whether a ServiceAccount should be created
-  create: true
+prometheus-blackbox-exporter:
+  restartPolicy: Always
+  
+  kind: Deployment
+  
+  hostNetwork: false
+  
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  
+  image:
+    registry: quay.io
+    repository: prometheus/blackbox-exporter
+    # Overrides the image tag whose default is {{ printf "v%s" .Chart.AppVersion }}
+    tag: ""
+    pullPolicy: IfNotPresent
+    digest: ""
+  
+  livenessProbe:
+    httpGet:
+      path: /-/healthy
+      port: http
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /-/healthy
+      port: http
+  
+  config:
+    modules:
+      http_2xx:
+        prober: http
+        timeout: 5s
+        http:
+          valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+          follow_redirects: true
+          preferred_ip_protocol: "ip4"
+  
+  service:
+    annotations: {}
+    labels: {}
+    type: ClusterIP
+    port: 9115
+    ipDualStack:
+      enabled: false
+      ipFamilies: ["IPv6", "IPv4"]
+      ipFamilyPolicy: "PreferDualStack"
+  
+  # Only changes container port. Application port can be changed with extraArgs (--web.listen-address=:9115)
+  # https://github.com/prometheus/blackbox_exporter/blob/998037b5b40c1de5fee348ffdea8820509d85171/main.go#L55
+  containerPort: 9115
+  
+  # Number of port to expose on the host. If specified, this must be a valid port number, 0 < x < 65536. If zero, no port is exposed.
+  # This is useful for communicating with Daemon Pods when kind is DaemonSet.
+  hostPort: 0
+  
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+    create: true
+  

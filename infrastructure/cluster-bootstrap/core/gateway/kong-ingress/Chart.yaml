@@ -1,0 +1,8 @@
+apiVersion: v2
+name: kong
+version: 0.1.0
+description: A Helm chart for deploying Kong Gateway
+dependencies:
+  - name: kong
+    version: "2.33.0"
+    repository: https://charts.konghq.com

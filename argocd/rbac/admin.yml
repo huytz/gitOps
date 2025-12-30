@@ -1,0 +1,60 @@
+# TEMPLATE CUSTOMIZATION REQUIRED:
+# After forking this template, review and customize:
+# - Line 50-51: Update 'subjects' with your admin user/group names
+# - Consider adding external identity provider integration (LDAP, OIDC, SAML)
+# See ../../docs/CUSTOMIZATION.md and argocd/rbac/README.md for detailed instructions.
+
+apiVersion: rbac-operator.argoproj-labs.io/v1alpha1
+kind: ArgoCDRole
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-rbac-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: admin
+  namespace: argocd
+spec:
+  rules:
+    # Allow pod exec for debugging and troubleshooting
+    - resource: "exec"
+      verbs: ["create", "get"]
+      objects: ["*/*"]
+    # Allow pod logs access
+    - resource: "logs"
+      verbs: ["get"]
+      objects: ["*/*"]
+    # Allow full application access
+    - resource: "applications"
+      verbs: ["*"]
+      objects: ["*/*"]
+    # Allow project access
+    - resource: "projects"
+      verbs: ["*"]
+      objects: ["*"]
+    # Allow repository access
+    - resource: "repositories"
+      verbs: ["*"]
+      objects: ["*"]
+    # Allow cluster access
+    - resource: "clusters"
+      verbs: ["*"]
+      objects: ["*"]
+    # Allow account management (create, update, delete accounts)
+    - resource: "accounts"
+      verbs: ["*"]
+      objects: ["*"]
+---
+apiVersion: rbac-operator.argoproj-labs.io/v1alpha1
+kind: ArgoCDRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-rbac-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: admin-binding
+  namespace: argocd
+spec:
+  subjects:
+    - kind: "local"
+      name: "admin"
+  argocdRoleRef:
+    name: "admin"
+

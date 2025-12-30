@@ -17,7 +17,7 @@ spec:
               repoURL: https://github.com/huytz/gitops.git
               revision: HEAD
               files:
-                - path: infrastructure/cluster-bootstrap/prometheus/charts.yaml
+                - path: infrastructure/cluster-bootstrap/prometheus/values.yaml
           # cluster generator
           - clusters:
               selector:
@@ -37,23 +37,20 @@ spec:
         managed-by: argocd
     spec:
       project: infrastructure
-      sources: 
-        - repoURL: "{{.repoURL}}"
-          chart: "{{.chart}}"
-          targetRevision: "{{.targetRevision}}"
-          helm:
-            releaseName: "{{.path.basename}}"
-            values: |
-              prometheus:
-                remoteWrite:
-                  - url: https://mimir.monitoring.svc.cluster.local/api/v1/push
-                    headers:
-                      "X-Scope-OrgID": "{{.name}}"
-            valueFiles:
-              - $values/{{.path.path}}/values.yaml
-        - repoURL: https://github.com/huytz/gitops.git
-          targetRevision: HEAD
-          ref: values
+      source:
+        repoURL: https://github.com/huytz/gitops.git
+        targetRevision: HEAD
+        path: "{{.path.path}}"
+        helm:
+          releaseName: "{{.path.basename}}"
+          values: |
+            prometheus:
+              remoteWrite:
+                - url: https://mimir.monitoring.svc.cluster.local/api/v1/push
+                  headers:
+                    "X-Scope-OrgID": "{{.name}}"
+          valueFiles:
+            - values.yaml
 
       destination:
         server: "{{.server}}"

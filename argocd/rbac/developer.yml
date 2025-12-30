@@ -1,0 +1,40 @@
+# TEMPLATE CUSTOMIZATION REQUIRED:
+# After forking this template, review and customize:
+# - Line 30-31: Update 'subjects' with your developer user/group names
+# - Adjust permissions (lines 10-18) based on your team's needs
+# - Consider adding external identity provider integration (LDAP, OIDC, SAML)
+# See ../../docs/CUSTOMIZATION.md and argocd/rbac/README.md for detailed instructions.
+
+apiVersion: rbac-operator.argoproj-labs.io/v1alpha1
+kind: ArgoCDRole
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-rbac-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: developer
+  namespace: argocd
+spec:
+  rules:
+    # Allow viewing pod logs for dev and prod applications
+    - resource: "logs"
+      verbs: ["get"]
+      objects: ["apps-dev/*", "apps-prod/*"]
+    # Allow viewing and listing applications in dev and prod projects
+    - resource: "applications"
+      verbs: ["get", "list"]
+      objects: ["apps-dev/*", "apps-prod/*"]
+---
+apiVersion: rbac-operator.argoproj-labs.io/v1alpha1
+kind: ArgoCDRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-rbac-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: developer-binding
+  namespace: argocd
+spec:
+  subjects:
+    - kind: "local"
+      name: "developer"
+  argocdRoleRef:
+    name: "developer"

@@ -1,0 +1,82 @@
+name: Sync Bootstrap Applications
+
+on:
+  schedule:
+    # Run every 6 hours to ensure bootstrap apps are synced
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-bootstrap:
+    name: Sync Bootstrap Applications
+    runs-on: [self-hosted, local]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Setup ArgoCD CLI
+        run: |
+          echo "📥 Installing ArgoCD CLI..."
+          if ! command -v argocd &> /dev/null; then
+            curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+            chmod +x /usr/local/bin/argocd
+            echo "✅ ArgoCD CLI installed"
+          else
+            echo "✅ ArgoCD CLI already installed"
+          fi
+          argocd version --client
+
+      - name: Configure kubectl context
+        run: |
+          echo "🔧 Configuring kubectl context..."
+          # Configure from secrets in production
+
+      - name: Login to ArgoCD
+        run: |
+          ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' || echo "localhost:8080")
+          ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+          
+          # Port forward in background
+          kubectl port-forward svc/argo-cd-argocd-server -n argocd 8080:443 &
+          sleep 5
+          
+          argocd login localhost:8080 --username admin --password "$ARGOCD_PASSWORD" --insecure || true
+
+      - name: Sync root applications
+        run: |
+          echo "🔄 Syncing root applications..."
+          ROOT_APPS=("argocd-applications" "argocd-projects" "argocd-rbac" "argocd-notification")
+          SYNC_FAILED=0
+          
+          for app in "${ROOT_APPS[@]}"; do
+            echo "📦 Syncing $app..."
+            if argocd app sync "$app" --timeout 300; then
+              echo "✅ Successfully synced $app"
+            else
+              echo "⚠️  Failed to sync $app"
+              SYNC_FAILED=1
+            fi
+          done
+          
+          if [ $SYNC_FAILED -eq 1 ]; then
+            echo "⚠️  Some applications failed to sync"
+            exit 1
+          else
+            echo "✅ All applications synced successfully"
+          fi
+
+      - name: Check sync status
+        run: |
+          echo "🔍 Checking sync status..."
+          echo "## Sync Status" >> $GITHUB_STEP_SUMMARY
+          argocd app list | grep -E "argocd-(applications|projects|rbac|notification)" | while read line; do
+            echo "- $line" >> $GITHUB_STEP_SUMMARY
+            echo "$line"
+          done || echo "⚠️  Could not retrieve application status"
+

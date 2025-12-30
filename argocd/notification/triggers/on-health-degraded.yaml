@@ -1,5 +1,5 @@
 - description: Application has degraded
   oncePer: app.status.operationState?.syncResult?.revision
   send:
-  - app-health-degraded
+    - app-health-degraded
   when: app.status.health.status == 'Degraded'

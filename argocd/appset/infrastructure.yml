@@ -1,3 +1,9 @@
+# TEMPLATE CUSTOMIZATION REQUIRED:
+# After forking this template, update the following values:
+# - Line 16: repoURL - Replace with your GitOps repository URL
+# - Line 34: repoURL - Replace with your GitOps repository URL
+# See ../../docs/CUSTOMIZATION.md for detailed instructions.
+
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -12,7 +18,7 @@ spec:
           # git generator, 'child' #1
           - git:
               files:
-                - path: infrastructure/clusters/*/*/charts.yaml
+                - path: infrastructure/clusters/*/*/values.yaml
               repoURL: https://github.com/huytz/gitops.git
               revision: HEAD
           # cluster generator, 'child' #2
@@ -30,18 +36,14 @@ spec:
         cluster: "{{.name}}"
     spec:
       project: infrastructure
-      sources:
-        # Dynamic chart selection based on component type
-        - repoURL: "{{.repoURL}}"
-          chart: "{{.chart}}"
-          targetRevision: "{{.targetRevision}}"
-          helm:
-            releaseName: "{{.path.basename}}"
-            valueFiles:
-              - $values/{{.path.path}}/values.yaml
-        - repoURL: https://github.com/huytz/gitops.git
-          targetRevision: HEAD
-          ref: values
+      source:
+        repoURL: https://github.com/huytz/gitops.git
+        targetRevision: HEAD
+        path: "{{.path.path}}"
+        helm:
+          releaseName: "{{.path.basename}}"
+          valueFiles:
+            - values.yaml
       destination:
         server: "{{.server}}"
         namespace: "{{index .path.segments 3}}"
@@ -59,3 +61,5 @@ spec:
           jqPathExpressions:
             - .spec.volumeClaimTemplates[].apiVersion
             - .spec.volumeClaimTemplates[].kind
+            - .spec.volumeClaimTemplates[].metadata.creationTimestamp
+            - .spec.volumeClaimTemplates[].status

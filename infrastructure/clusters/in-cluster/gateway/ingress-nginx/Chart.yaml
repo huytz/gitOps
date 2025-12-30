@@ -1,0 +1,9 @@
+apiVersion: v2
+name: ingress-nginx
+version: 0.1.0
+description: A Helm chart for deploying Kong Ingress Controller
+dependencies:
+  - name: ingress-nginx
+    version: "4.13.2"
+    repository: https://charts.konghq.com
+

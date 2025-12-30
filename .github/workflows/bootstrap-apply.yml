@@ -1,0 +1,135 @@
+name: Apply Bootstrap Configuration
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      cluster:
+        description: 'Target cluster context'
+        required: true
+        default: 'docker-desktop'
+      dry_run:
+        description: 'Dry run mode'
+        type: boolean
+        default: false
+
+  # Automatic trigger on push to main branch
+  push:
+    branches:
+      - main
+    paths:
+      - '_bootstraps/**'
+
+jobs:
+  apply-bootstrap:
+    name: Apply Bootstrap to Cluster
+    runs-on: [self-hosted, local]
+    # Require manual approval for security
+    environment:
+      name: production
+      url: https://argo-cd.example.com  # Update with your ArgoCD URL
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl context
+        run: |
+          echo "🔧 Configuring kubectl context..."
+          # Use cluster from workflow input (manual) or default (automatic)
+          CLUSTER_CONTEXT="${{ github.event.inputs.cluster || 'docker-desktop' }}"
+          echo "Using cluster context: $CLUSTER_CONTEXT"
+          # In production, use proper kubeconfig from secrets
+          # kubectl config set-cluster ...
+          # kubectl config use-context "$CLUSTER_CONTEXT"
+
+      - name: Validate cluster access
+        run: |
+          echo "🔍 Validating cluster access..."
+          kubectl cluster-info || exit 1
+          kubectl get nodes || exit 1
+          echo "✅ Cluster access validated"
+
+      - name: Check ArgoCD installation
+        id: check-argocd
+        run: |
+          if kubectl get namespace argocd 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✅ ArgoCD namespace exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️  ArgoCD namespace not found"
+          fi
+
+      - name: Install/Upgrade ArgoCD
+        if: steps.check-argocd.outputs.exists == 'false' || github.event.inputs.dry_run == 'false'
+        run: |
+          echo "🚀 Installing/Upgrading ArgoCD..."
+          helm repo add argo https://argoproj.github.io/argo-helm || true
+          helm repo update
+          
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            helm upgrade --install argo-cd argo/argo-cd \
+              --version 8.2.5 \
+              --namespace argocd \
+              --values _bootstraps/argocd.yml \
+              --dry-run \
+              --debug
+          else
+            kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+            helm upgrade --install argo-cd argo/argo-cd \
+              --version 8.2.5 \
+              --namespace argocd \
+              --values _bootstraps/argocd.yml \
+              --wait \
+              --timeout 10m
+            echo "✅ ArgoCD installed/upgraded"
+          fi
+
+      - name: Wait for ArgoCD to be ready
+        if: steps.check-argocd.outputs.exists == 'false' && github.event.inputs.dry_run == 'false'
+        run: |
+          echo "⏳ Waiting for ArgoCD to be ready..."
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/argo-cd-server -n argocd || true
+
+      - name: Apply root applications
+        run: |
+          echo "📦 Applying root applications..."
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          if [ "$DRY_RUN" == "true" ]; then
+            echo "🔍 Running in dry-run mode..."
+            kubectl apply --dry-run=client -f _bootstraps/root/
+            echo "✅ Dry run completed"
+          else
+            echo "🚀 Applying root applications..."
+            kubectl apply -f _bootstraps/root/
+            echo "✅ Root applications applied"
+          fi
+
+      - name: Verify bootstrap
+        if: github.event.inputs.dry_run == 'false'
+        run: |
+          echo "🔍 Verifying bootstrap..."
+          sleep 10
+          kubectl get applications -n argocd || true
+          echo "✅ Bootstrap verification completed"
+
+      - name: Summary
+        run: |
+          echo "## Bootstrap Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Bootstrap configuration applied" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cluster**: ${{ github.event.inputs.cluster || 'docker-desktop (default)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run**: ${{ github.event.inputs.dry_run || 'false' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

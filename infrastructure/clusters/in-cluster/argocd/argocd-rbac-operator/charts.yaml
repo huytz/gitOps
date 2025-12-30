@@ -1,3 +1,0 @@
-repoURL: https://argoproj-labs.github.io/argocd-rbac-operator/
-chart: argocd-rbac-operator
-targetRevision: 0.4.3

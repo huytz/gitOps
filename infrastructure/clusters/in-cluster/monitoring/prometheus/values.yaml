@@ -1,62 +1,50 @@
-## Install Prometheus Operator CRDs
-##
-crds:
-  enabled: true
-  ## The CRD upgrade job mitigates the limitation of helm not being able to upgrade CRDs.
-  ## The job will apply the CRDs to the cluster before the operator is deployed, using helm hooks.
-  ## It deploy a corresponding clusterrole, clusterrolebinding and serviceaccount to apply the CRDs.
-  ## This feature is in preview, off by default and may change in the future.
-  ## Enable CRD upgrade job to ensure CRDs are installed first
-  upgradeJob:
+kube-prometheus-stack:
+  crds:
     enabled: true
-
-## Create default rules for monitoring the cluster
-##
-defaultRules:
-  create: false
-##
-global:
-  rbac:
-    create: true
-
-   
-alertmanager:
-  ## Deploy alertmanager
-  ##
-  enabled: false
-
-## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
-##
-grafana:
-  enabled: false
-
-kubeStateMetrics:
-  enabled: false
-
-nodeExporter:
-  enabled: false
-  
-kubernetesServiceMonitors:
-  enabled: true
-
-## Component scraping the kube api server
-##
-kubeApiServer:
-  enabled: true
-
-prometheusOperator:
-  enabled: true
-  ## Ensure CRDs are installed before operator
-  admissionWebhooks:
-    enabled: true
-    patch:
+    upgradeJob:
       enabled: true
 
+  defaultRules:
+    create: false
 
-prometheus:
-  enabled: true
-  serviceAccount:
-    create: true
-    name: ""
-    annotations: {}
-    automountServiceAccountToken: true
+  global:
+    rbac:
+      create: true
+
+
+  alertmanager:
+    enabled: false
+
+  grafana:
+    enabled: false
+
+  kubeStateMetrics:
+    enabled: false
+
+  nodeExporter:
+    enabled: false
+
+  kubernetesServiceMonitors:
+    enabled: true
+
+  ## Component scraping the kube api server
+  ##
+  kubeApiServer:
+    enabled: true
+
+  prometheusOperator:
+    enabled: true
+    ## Ensure CRDs are installed before operator
+    admissionWebhooks:
+      enabled: true
+      patch:
+        enabled: true
+
+
+  prometheus:
+    enabled: true
+    serviceAccount:
+      create: true
+      name: ""
+      annotations: {}
+      automountServiceAccountToken: true

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: argocd-rbac-operator
+version: 0.1.0
+description: A Helm chart for deploying ArgoCD RBAC Operator
+dependencies:
+  - name: argocd-rbac-operator
+    version: "0.4.3"
+    repository: https://argoproj-labs.github.io/argocd-rbac-operator/
+

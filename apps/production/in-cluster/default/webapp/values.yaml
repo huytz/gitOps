@@ -1,7 +1,12 @@
+# TEMPLATE CUSTOMIZATION REQUIRED:
+# After forking this template, update the following:
+# - Line 4: repository - Replace 'ghcr.io/huytz/webapp' with your container image
+# See ../../../../docs/CUSTOMIZATION.md for detailed instructions.
+
 applicationName: webapp
 replicaCount: 1
 containerImage:
-  repository: ghcr.io/huytz/webapp
+  repository: ghcr.io/huytz/webapp  # TODO: Update with your container registry
   tag: main-44a3767
   pullPolicy: IfNotPresent
 containerPorts:

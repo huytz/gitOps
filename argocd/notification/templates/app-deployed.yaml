@@ -53,7 +53,7 @@ teams:
     }
     {{range $index, $c := .app.status.conditions}}
       ,
-      {      
+      {
         "name": "{{$c.type}}",
         "value": "{{$c.message}}"
       }

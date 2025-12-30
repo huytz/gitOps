@@ -1,5 +1,5 @@
 - description: Application is created.
   oncePer: app.metadata.name
   send:
-  - app-created
+    - app-created
   when: "true"

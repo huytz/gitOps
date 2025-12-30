@@ -15,7 +15,7 @@ spec:
   destinations:
     - namespace: '*'
       server: '*'
-  
+
   # Cluster-scoped resources needed for infrastructure components
   clusterResourceWhitelist:
     - group: ''

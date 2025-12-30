@@ -1,3 +1,14 @@
+# TEMPLATE CUSTOMIZATION REQUIRED:
+# After forking this template, update the following values:
+# - Line 14: repoURL - Replace with your GitOps repository URL
+# - Line 28: image-list - Replace 'ghcr.io/huytz' with your container registry
+# - Line 29: allow-tags - Update regex pattern to match your CI/CD tag format
+# - Line 39: git-branch - Update if your default branch is not 'main'
+# - Line 40: git-repository - Replace with your repository SSH URL
+# - Line 51: repoURL - Update Helm chart repository URL
+# - Line 58: repoURL - Replace with your GitOps repository URL
+# See ../../docs/CUSTOMIZATION.md for detailed instructions.
+
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -7,21 +18,21 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     # matrix 'parent' generator
-   - matrix:
-      generators:
-      # git generator, 'child' #1
-      - git:
-          repoURL: https://github.com/huytz/gitops.git
-          revision: HEAD
-          directories:
-          - path: apps/development/*/*
-      # cluster generator, 'child' #2
-      - clusters:
-          selector:
-            matchLabels:
-              argocd.argoproj.io/secret-type: cluster
-              kubernetes.io/environment: 'development'
-  
+    - matrix:
+        generators:
+          # git generator, 'child' #1
+          - git:
+              repoURL: https://github.com/huytz/gitops.git
+              revision: HEAD
+              directories:
+                - path: apps/development/*/*
+          # cluster generator, 'child' #2
+          - clusters:
+              selector:
+                matchLabels:
+                  argocd.argoproj.io/secret-type: cluster
+                  kubernetes.io/environment: development
+
   template:
     metadata:
       annotations:
@@ -29,7 +40,7 @@ spec:
         argocd-image-updater.argoproj.io/app.allow-tags: regexp:^develop-[0-9a-f]{7}$
         argocd-image-updater.argoproj.io/app.update-strategy: newest-build
         argocd-image-updater.argoproj.io/app.platform: linux/amd64
-        
+
         # Helm parameters for image update
         argocd-image-updater.argoproj.io/app.force-update: "true"
         argocd-image-updater.argoproj.io/app.helm.image-name: containerImage.repository
@@ -39,33 +50,33 @@ spec:
         argocd-image-updater.argoproj.io/git-branch: main
         argocd-image-updater.argoproj.io/git-repository: git@github.com:huytz/gitops.git
         argocd-image-updater.argoproj.io/write-back-target: "helmvalues:/{{.path.path}}/values.yaml"
-        
+
       name: '{{.name}}-{{index .path.segments 2}}-{{.path.basename}}'
       labels:
         appset: apps-dev
         environment: 'development'
         cluster: '{{.name}}'
     spec:
-      project: apps-dev      
+      project: apps-dev
       sources:
-      - repoURL: https://huytz.github.io/helm-kubernetes-services/
-        chart: 'k8s-service'
-        targetRevision: "0.0.*"
-        helm:
-          releaseName: '{{.path.basename}}'
-          valueFiles:
-          - $values/{{.path.path}}/values.yaml 
-      - repoURL: https://github.com/huytz/gitops.git
-        targetRevision: HEAD
-        ref: values
+        - repoURL: https://huytz.github.io/helm-kubernetes-services/
+          chart: 'k8s-service'
+          targetRevision: "0.0.*"
+          helm:
+            releaseName: '{{.path.basename}}'
+            valueFiles:
+              - $values/{{.path.path}}/values.yaml
+        - repoURL: https://github.com/huytz/gitops.git
+          targetRevision: HEAD
+          ref: values
 
       destination:
         server: '{{.server}}'
         namespace: '{{index .path.segments 2}}'
       syncPolicy:
         syncOptions:
-        - CreateNamespace=true
-        - ServerSideApply=true
+          - CreateNamespace=true
+          - ServerSideApply=true
         automated:
           prune: true
           selfHeal: true

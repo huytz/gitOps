@@ -1,3 +1,0 @@
-repoURL: https://SonarSource.github.io/helm-chart-sonarqube
-chart: sonarqube
-targetRevision: 2025.6.1

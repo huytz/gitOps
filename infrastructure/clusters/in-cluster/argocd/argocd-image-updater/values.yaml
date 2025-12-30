@@ -1,64 +1,62 @@
-# -- Replica count for the deployment. It is not advised to run more than one replica.
-replicaCount: 1
-image:
-  # -- Default image repository
-  repository: quay.io/argoprojlabs/argocd-image-updater
-  # -- Default image pull policy
-  pullPolicy: Always
-  # -- Overrides the image tag whose default is the chart appVersion
-  tag: ""
+argocd-image-updater:
+  replicaCount: 1
+  image:
+   # -- Default image repository
+   repository: quay.io/argoprojlabs/argocd-image-updater
+   # -- Default image pull policy
+   pullPolicy: Always
+   # -- Overrides the image tag whose default is the chart appVersion
+   tag: ""
 
-config:
-  # -- Name of the ConfigMap
-  name: argocd-image-updater-config
-  
-  # -- API kind that is used to manage Argo CD applications (`kubernetes` or `argocd`)
-  applicationsAPIKind: "kubernetes"
+  config:
+   # -- Name of the ConfigMap
+   name: argocd-image-updater-config
 
-  disableKubeEvents: false
-  # -- Username to use for Git commits
-  gitCommitUser: "huytz"
+   # -- API kind that is used to manage Argo CD applications (`kubernetes` or `argocd`)
+   applicationsAPIKind: "kubernetes"
 
-  # -- E-Mail address to use for Git commits
-  gitCommitMail: ""
+   disableKubeEvents: false
+   # -- Username to use for Git commits
+   gitCommitUser: "huytz"
 
-  # -- Changing the Git commit message
-  gitCommitTemplate: |
-    build: automatic update of {{ .AppName }}
+   # -- E-Mail address to use for Git commits
+   gitCommitMail: ""
 
-    {{ range .AppChanges -}}
-    updates image {{ .Image }} tag to '{{ .NewTag }}'
-    {{ end -}}
+   # -- Changing the Git commit message
+   gitCommitTemplate: |
+     build: automatic update of {{ .AppName }}
 
-  # -- Enables sign off on commits
-  gitCommitSignOff: false
+     {{ range .AppChanges -}}
+     updates image {{ .Image }} tag to '{{ .NewTag }}'
+     {{ end -}}
 
-  # -- Method used to sign Git commits. `openpgp` or `ssh`
-  gitCommitSigningMethod: ""
+   # -- Enables sign off on commits
+   gitCommitSignOff: false
 
-  # -- Argo CD Image Update log level
-  logLevel: "debug"
-  
-  # -- Platform preferences for image selection
-  # This fixes the platform compatibility issue where darwin/amd64 is requested but only linux images exist
-  platforms: "linux/amd64"
-  
-  registries: []
-  sshConfig:
-    # -- Name of the sshConfig ConfigMap
-    name: argocd-image-updater-ssh-config
-    # -- Argo CD Image Updater ssh client parameter configuration
-    config: |
-      Host *
-        PubkeyAcceptedAlgorithms +ssh-rsa
-        HostkeyAlgorithms +ssh-rsa
+   # -- Method used to sign Git commits. `openpgp` or `ssh`
+   gitCommitSigningMethod: ""
 
+   # -- Argo CD Image Update log level
+   logLevel: "debug"
 
-rbac:
-  # -- Enable RBAC creation
-  enabled: true
+   # -- Platform preferences for image selection
+   # This fixes the platform compatibility issue where darwin/amd64 is requested but only linux images exist
+   platforms: "linux/amd64"
 
-# Metrics configuration
-metrics:
-  # -- Deploy metrics service
-  enabled: true
+   registries: []
+   sshConfig:
+     # -- Name of the sshConfig ConfigMap
+     name: argocd-image-updater-ssh-config
+     # -- Argo CD Image Updater ssh client parameter configuration
+     config: |
+       Host *
+         PubkeyAcceptedAlgorithms +ssh-rsa
+         HostkeyAlgorithms +ssh-rsa
+
+  rbac:
+   # -- Enable RBAC creation
+   enabled: true
+
+  metrics:
+   # -- Deploy metrics service
+   enabled: true
