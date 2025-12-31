@@ -16,11 +16,6 @@ Developer role with read-only access:
 - ✅ View pod logs
 - ❌ No create, update, delete, or sync permissions
 
-### `image-updater.yml`
-Image Updater service account:
-- ✅ Application read and update access
-- ✅ Secure Git write-back permissions
-
 ## Key Features
 
 - ✅ **Role-Based Access**: Custom roles with specific permissions
