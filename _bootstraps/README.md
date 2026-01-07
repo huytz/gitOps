@@ -2,12 +2,22 @@
 
 Automated CI/CD for managing the `_bootstraps/` directory using GitHub Actions.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+- [Core Workflows](#core-workflows)
+- [Configuration](#configuration)
+- [Workflow Triggers](#workflow-triggers)
+- [Ensuring Sync](#ensuring-sync)
+- [Reference](#reference)
+
 ## Overview
 
-- ✅ **Version Controlled**: All bootstrap configs in Git
-- ✅ **Automated Deployment**: CI applies changes via GitHub Actions
-- ✅ **Self-Managing**: ArgoCD manages its own configuration
-- ✅ **Automated Sync**: Periodic sync every 6 hours
+- **Version Controlled**: All bootstrap configs in Git
+- **Automated Deployment**: CI applies changes via GitHub Actions
+- **Self-Managing**: ArgoCD manages its own configuration
+- **Automated Sync**: Periodic sync every 6 hours
 
 ## Quick Start
 
@@ -121,21 +131,6 @@ gh workflow run bootstrap-sync.yml
 
 # Via ArgoCD CLI
 argocd app sync argocd-applications argocd-projects argocd-rbac argocd-notification
-```
-
-## Troubleshooting
-
-**Bootstrap Apply Fails**:
-```bash
-kubectl cluster-info
-kubectl get pods -n argocd
-kubectl apply -f _bootstraps/root/  # Manual apply
-```
-
-**Sync Fails**:
-```bash
-argocd version
-argocd app sync argocd-applications
 ```
 
 ## Reference

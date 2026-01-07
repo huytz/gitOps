@@ -19,12 +19,13 @@ spec:
               files:
                 - path: infrastructure/cluster-bootstrap/prometheus/values.yaml
           # cluster generator
+          # Target Application clusters for Prometheus bootstrap
           - clusters:
               selector:
                 matchLabels:
                   argocd.argoproj.io/secret-type: cluster
+                  cluster.type: application
                   cluster.bootstrap.prometheus: "true"
-                  kubernetes.io/environment: production
 
   template:
     metadata:

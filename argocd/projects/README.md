@@ -2,6 +2,14 @@
 
 Projects organize applications into logical groups with specific permissions and policies.
 
+## Table of Contents
+
+- [Core Projects](#core-projects)
+- [Key Features](#key-features)
+- [Usage](#usage)
+- [Examples](#examples)
+- [Reference](#reference)
+
 ## Core Projects
 
 ### `apps-dev.yml`
@@ -24,10 +32,10 @@ Infrastructure components:
 
 ## Key Features
 
-- ✅ **Environment Isolation**: Separate projects for dev/prod
-- ✅ **Access Control**: RBAC policies per project
-- ✅ **Notifications**: Project-level Slack/Teams subscriptions
-- ✅ **Resource Management**: Source and destination restrictions
+- **Environment Isolation**: Separate projects for dev/prod
+- **Access Control**: RBAC policies per project
+- **Notifications**: Project-level Slack/Teams subscriptions
+- **Resource Management**: Source and destination restrictions
 
 ## Usage
 
@@ -38,6 +46,38 @@ kubectl get appprojects -n argocd
 # Get project details
 kubectl get appproject apps-dev -n argocd -o yaml
 ```
+
+## Examples
+
+### Creating a New Project
+
+Projects are defined in YAML files. Example structure:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: my-project
+  namespace: argocd
+spec:
+  description: My custom project
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+```
+
+### Project Sync Policies
+
+Projects can define sync policies:
+
+- **Automated**: Auto-sync with prune and self-heal
+- **Manual**: Requires manual approval for syncs
+- **Sync Windows**: Time-based sync restrictions
 
 ## Reference
 

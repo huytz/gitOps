@@ -22,11 +22,12 @@ spec:
               repoURL: https://github.com/huytz/gitops.git
               revision: HEAD
           # cluster generator, 'child' #2
+          # Target Platform clusters (DevOps/Management clusters)
           - clusters:
               selector:
                 matchLabels:
                   argocd.argoproj.io/secret-type: cluster
-                  kubernetes.io/environment: production
+                  cluster.type: platform
   template:
     metadata:
       name: "{{.name}}-{{.path.basename}}"

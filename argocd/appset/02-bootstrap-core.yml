@@ -19,12 +19,13 @@ spec:
               files:
                 - path: infrastructure/cluster-bootstrap/core/*/*/values.yaml
           # cluster generator
+          # Target Application clusters for core infrastructure bootstrap
           - clusters:
               selector:
                 matchLabels:
                   argocd.argoproj.io/secret-type: cluster
+                  cluster.type: application
                   cluster.bootstrap.core: "true"
-                  kubernetes.io/environment: production
 
   template:
     metadata:

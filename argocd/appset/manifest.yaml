@@ -20,7 +20,6 @@ spec:
               selector:
                 matchLabels:
                   argocd.argoproj.io/secret-type: cluster
-                  kubernetes.io/environment: production
   template:
     metadata:
       name: "{{.name}}-{{index .path.segments 3}}-{{index .path.segments 4}}"
