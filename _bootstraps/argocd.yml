@@ -11,15 +11,24 @@ redis-ha:
 
 controller:
   replicas: 1
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::<ARGO_CD_AWS_ACCOUNT_ID>:role/ArgoCDManagementRole"
 
 server:
   replicas: 2
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::<ARGO_CD_AWS_ACCOUNT_ID>:role/ArgoCDManagementRole"
 
 repoServer:
   replicas: 2
 
 applicationSet:
   replicas: 2
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::<ARGO_CD_AWS_ACCOUNT_ID>:role/ArgoCDManagementRole"
 
 ## Enable exec
 configs:
